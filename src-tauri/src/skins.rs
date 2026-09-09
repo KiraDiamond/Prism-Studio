@@ -53,7 +53,7 @@ fn is_safe_id(id: &str) -> bool {
     !id.is_empty() && id.len() <= 64 && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
 }
 
-fn validate_png_and_get_hash(bytes: &[u8]) -> Result<String, String> {
+pub(crate) fn validate_png_and_get_hash(bytes: &[u8]) -> Result<String, String> {
     if bytes.len() > 1024 * 1024 { return Err("File exceeds 1MB".into()); }
     
     // Actually parse and validate the PNG

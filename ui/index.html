@@ -56,7 +56,7 @@
                         <span id="status-sub">Checking Prism Launcher</span>
                     </div>
                 </div>
-                <div class="sidebar-version">PRISM STUDIO 0.1.0</div>
+                <div class="sidebar-version">PRISM STUDIO 0.1.1</div>
             </div>
         </nav>
 
@@ -206,13 +206,13 @@
                         </div>
 
                         <div class="skin-feature-actions">
-                            <button class="btn btn-primary" disabled title="Requires backend skin support">Apply Skin</button>
+                            <button id="btn-apply-skin" class="btn btn-primary" type="button" disabled>Apply Skin</button>
                             <button id="btn-remove-skin" class="btn btn-secondary" type="button">Remove from pack</button>
                             <button id="btn-move-skin" class="btn btn-secondary" type="button">Move to Pack</button>
                             <button id="btn-add-skin-to-pack" class="btn btn-secondary">Add to Pack</button>
                         </div>
 
-                        <p class="skin-backend-note">Pack creation/import/share works locally. Applying a Minecraft skin still needs backend support.</p>
+                        <p class="skin-backend-note">Apply uploads this skin to your selected Minecraft Java account.</p>
                     </section>
 
                     <section class="skin-pack-browser">
@@ -273,6 +273,7 @@
                         <button id="btn-save-connection" class="btn btn-primary">Save & reconnect</button>
                     </section>
 
+                    <section class="settings-panel"><div class="section-kicker">Updates</div><h3>Prism Studio</h3><p>Check GitHub for a newer version. Your settings and packs are preserved.</p><button id="btn-check-updates" class="btn btn-secondary" type="button">Check for updates</button></section>
                     <aside class="settings-side-panel">
                         <div class="section-kicker">HOW IT WORKS</div>
                         <h3>Studio on top. Prism underneath.</h3>
@@ -343,6 +344,16 @@
     </div>
 
     <!-- Create pack modal -->
+    <dialog id="apply-skin-dialog" class="studio-dialog" aria-labelledby="apply-skin-title">
+        <form id="apply-skin-form" method="dialog">
+            <h3 id="apply-skin-title">Apply skin to Minecraft</h3>
+            <p id="apply-skin-target"></p>
+            <label for="apply-skin-model">Arm model</label>
+            <select id="apply-skin-model"><option value="default">Classic</option><option value="slim">Slim</option></select>
+            <p id="apply-skin-status" role="status" aria-live="polite"></p>
+            <div class="dialog-actions"><button value="cancel" class="btn btn-secondary">Cancel</button><button id="confirm-apply-skin" value="apply" class="btn btn-primary">Apply Skin</button></div>
+        </form>
+    </dialog>
     <dialog id="create-pack-dialog" class="studio-dialog">
         <form method="dialog" id="create-pack-form">
             <div class="dialog-eyebrow">NEW SKIN PACK</div>

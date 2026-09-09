@@ -651,6 +651,7 @@ input, select { user-select: text; }
 
 /* Dialog */
 .studio-dialog {
+    position:fixed; inset:0; margin:auto; max-height:calc(100dvh - 40px); overflow:auto;
     width:min(420px,calc(100vw - 40px)); border:1px solid var(--border-strong); border-radius:14px; background:var(--bg-surface); color:var(--text-primary);
     box-shadow:0 30px 80px rgba(0,0,0,.6); padding:0;
 }

@@ -24,7 +24,7 @@ Release candidate built on Windows, 9 September 2026. Further release work was s
 - Final full-process restart, multi-window concurrent editing, every recovery scenario, and large-pack stress testing.
 - GitHub CI execution or a published GitHub release.
 
-Apply Skin remains disabled. Installer is unsigned. The project owner must select a project license before a licensed public release; none was invented.
+The initial release pass left Apply Skin disabled; the update below adds it. Installer is unsigned. The project owner must select a project license before a licensed public release; none was invented.
 
 ## Delivered changes
 
@@ -41,3 +41,17 @@ Prism Studio.exe — optimized executable; WebView2 required.
 Prism Studio.zip — portable executable and documentation.
 
 These are a usable release candidate, not a claim that every public-release acceptance check is complete.
+
+## Apply Skin update
+
+Apply Skin now uploads the stored original PNG to the official Minecraft Java skin endpoint. A dialog identifies the target account and offers Classic/Slim arms. Only Rust reads Prism's saved Minecraft session; no token is returned to JavaScript, logged, or passed through a process command line. The frontend cannot supply the service URL. HTTPS is required, redirects are disabled, requests have timeouts, and the authenticated profile ID is checked before uploading. Prism account files are not modified. Expired sessions require refreshing the account through Prism.
+
+Protocol checked against [Prism's skin upload implementation](https://github.com/PrismLauncher/PrismLauncher/blob/develop/launcher/minecraft/skins/SkinUpload.cpp) and account serialization. No Prism source implementation was copied.
+
+Ten Rust tests passed, including a local HTTP fixture that checks the identity request, authorization header, multipart PNG and Slim variant, plus rejection of expired/offline/ambiguous accounts and non-success statuses. Static checks and npm runtime dependency audit passed (zero vulnerabilities reported). No online account was changed during automated tests, so live Minecraft propagation is not claimed as tested. The account preview is updated for the current Studio session after success; Prism's own cached preview refreshes through Prism.
+
+Updated production installer build passed. Actual release desktop checks passed: enabled Apply, named target and model dialog, Cancel, Rust identity rejection before network, retryable errors, invalid-model rejection, all pack rows retained, and no JavaScript errors. No live online skin was changed during testing.
+
+## Version 0.1.1 — dialogs and updates
+
+All three dialogs passed centering checks at 640, 1280 and 1920 pixels in the actual release executable. Ten Rust tests and static checks passed. The optimized executable and NSIS installer built successfully. Settings now includes Check for updates, and the standalone updater supports older EXE installations. The updater preserves data and a previous-EXE backup, validates release metadata and SHA-256, and refuses unverified downloads.

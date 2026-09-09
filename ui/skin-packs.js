@@ -81,6 +81,7 @@ function renderSkinGrid(pack) {
 }
 
 function renderSelectedSkin(skin,pack=activeSkinPack()) {
+    document.getElementById('btn-apply-skin').disabled=!skin?.texture||!skinStorageReady||skinUploadBusy;
     els.skinPreviewCharacter.classList.toggle('has-real-skin',!!skin?.render);
     els.skinPreviewCharacter.querySelector('.pack-preview-image')?.remove();
     if(skin?.render){const img=document.createElement('img');img.className='pack-preview-image';img.src=skin.render;img.alt=skin.name;els.skinPreviewCharacter.append(img);}
@@ -222,4 +223,35 @@ function deleteActiveSkinPack() {
     saveSkinPacks();
     renderSkinPacks();
 }
+
+let skinUploadBusy=false;
+document.getElementById('btn-apply-skin').addEventListener('click',()=>{
+    const skin=skinById(state.selectedSkinId);
+    if(!skin||skinUploadBusy)return;
+    if(!state.profile){showToast('Select your Minecraft account in Accounts first.','error');return;}
+    const dialog=document.getElementById('apply-skin-dialog');
+    dialog.dataset.skin=skin.id;dialog.dataset.profile=state.profile;
+    document.getElementById('apply-skin-target').textContent=`Apply “${skin.name}” to ${state.profile}? This changes that account’s Minecraft Java skin.`;
+    document.getElementById('apply-skin-model').value=skin.model==='slim'?'slim':'default';
+    document.getElementById('apply-skin-status').textContent='';
+    dialog.showModal();
+});
+document.getElementById('apply-skin-form').addEventListener('submit',async event=>{
+    event.preventDefault();const dialog=document.getElementById('apply-skin-dialog');
+    if(event.submitter?.value==='cancel'){dialog.close();return;}
+    if(skinUploadBusy)return;
+    const profile=dialog.dataset.profile,skinId=dialog.dataset.skin;
+    const model=document.getElementById('apply-skin-model').value;
+    const status=document.getElementById('apply-skin-status');const button=document.getElementById('confirm-apply-skin');
+    skinUploadBusy=true;button.disabled=true;document.getElementById('apply-skin-model').disabled=true;
+    document.getElementById('btn-apply-skin').disabled=true;status.textContent='Uploading to Minecraft…';
+    try{
+        await skinStorageQueue;
+        await invoke('apply_skin',{skinId,profile,model});
+        const skin=skinById(skinId),account=state.accounts.find(a=>a.name===profile);
+        if(skin&&account){account.skin=skin.texture;account.model=model;await prepareAccountSkins();}
+        dialog.close();showToast(`Skin applied to ${profile}. Rejoin your world or server to see it.`,'success');
+    }catch(error){status.textContent=String(error);}
+    finally{skinUploadBusy=false;button.disabled=false;document.getElementById('apply-skin-model').disabled=false;renderSkinPacks();}
+});
 

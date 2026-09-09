@@ -16,6 +16,14 @@ Requirements: Windows 10/11 (64-bit), Prism Launcher, and a Minecraft account co
 
 Builds are unsigned, so Windows may show a publisher warning. Download only from this project's releases. If no installer is published yet, use the developer instructions below. Node.js and Rust are not required to use the installed application.
 
+## Updating an existing EXE
+
+In this version, open **Settings → Check for updates**. Studio checks the latest stable GitHub release, asks before updating, verifies the executable's SHA-256 digest and product/version, then closes and reopens the app. The previous executable is retained beside it as a `.bak` file. Settings and packs are not replaced.
+
+For older EXE builds without that button, download **Prism-Studio-Updater.zip** from [Releases](https://github.com/KiraDiamond/Prism-Studio/releases/latest), extract both files, and run **Update-Prism-Studio.cmd**. Select your existing Prism Studio EXE if asked. You only need this standalone step once. Updating requires write access to the EXE's directory. GitHub download verification is not Windows code signing; builds remain unsigned.
+
+Release maintainers must publish a stable `vMAJOR.MINOR.PATCH` release with a `Prism-Studio.exe` asset matching its version, and include `Prism-Studio-Updater.zip`. The updater rejects incomplete releases or downloads without GitHub's SHA-256 digest.
+
 ## First launch
 
 Studio checks the usual Prism executable and data locations. If your library does not appear, open **Settings**, enter the path to prismlauncher.exe and your Prism data directory, then choose **Save & reconnect**. Portable installations work with their own executable and data directory.
@@ -42,20 +50,20 @@ Create a pack, then **Add skin** to import original 64x64 or legacy 64x32 PNGs, 
 
 Original PNGs are content-deduplicated under %APPDATA%\PrismStudio\skins. Packs reference shared skin IDs. Shared packs include original textures, names and default/slim models; previews are generated locally. Back up the entire skins directory. library.bak retains the previous metadata save; legacy migration data is retained separately when present.
 
-**Apply Skin is unavailable.** Use Minecraft's supported tools to change your online skin. Collection and sharing do not change it.
+**Apply Skin** changes the selected account's Minecraft Java skin. Select a skin, click Apply Skin, check the account shown, choose Classic or Slim arms, and confirm. Studio uploads the original PNG directly to Minecraft over HTTPS. Rejoin your world/server to see the change. Offline accounts cannot upload skins. If the session has expired, refresh or sign in to that account in Prism and retry. Prism's cached preview may remain old until Prism refreshes it.
 
 ## Settings and privacy
 
 ![Settings](docs/screenshots/settings.png)
 
-No telemetry, advertising, cloud account, local HTTP server or remote avatar service. Authentication tokens are not exposed to the frontend. Prism handles authentication. Skins stay local unless you share an exported pack.
+No telemetry, advertising, cloud account, local HTTP server or remote avatar service. Authentication tokens are not exposed to the frontend. Prism handles authentication. Skins stay local unless you share an exported pack or confirm Apply Skin, which sends the original PNG to Minecraft's official service using the selected account's saved Minecraft session in Rust. Studio neither logs tokens nor rewrites Prism's account file.
 
 Studio does not rewrite Prism account or instance configuration. Connection settings and layout live under %APPDATA%\PrismStudio. Lightweight choices such as favourites, server addresses and profile selection use local WebView storage. Original skin textures live on disk, not indefinitely as browser base64 data.
 
 ## Limitations
 
 - Pre-1.0 Windows release tested on one development machine, not every Windows PC.
-- No online Apply Skin and no replacement for Prism account/instance management.
+- Apply Skin needs a valid online Minecraft session from Prism; Studio does not refresh Microsoft authentication itself.
 - A successful Play handoff means the Prism process started, not that Minecraft finished launching.
 - Installer signing and automatic release publishing are not configured.
 - Screenshots use demonstration data.

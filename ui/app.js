@@ -997,6 +997,12 @@ function setupUIEvents() {
         try{await transferSkin(dialog.dataset.source,dialog.dataset.skin,document.getElementById('skin-destination').value,dialog.dataset.move==='true');dialog.close();}catch(error){showToast(String(error),'error');}
     });
     els.btnSaveConnection.addEventListener('click',saveConnectionSettings);
+    document.getElementById('btn-check-updates').addEventListener('click',async event=>{
+        event.currentTarget.disabled=true;
+        try{await invoke('check_updates');showToast('Updater opened. Follow its prompts.','success');}
+        catch(error){showToast(String(error),'error');}
+        finally{document.getElementById('btn-check-updates').disabled=false;}
+    });
     els.btnCloseInspector.addEventListener('click',closeInspector);
     els.inspFav.addEventListener('click',()=>{ if (state.selectedId) toggleFavorite(state.selectedId); });
     els.btnPlay.addEventListener('click',()=>{ if (state.selectedId) launchInstance(state.selectedId,els.inspServer.value,true); });

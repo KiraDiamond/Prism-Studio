@@ -1,6 +1,6 @@
 [package]
 name = "prism-studio"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [build-dependencies]
@@ -14,6 +14,7 @@ base64 = "0.22"
 sha2 = "0.10"
 png = "0.17"
 uuid = { version = "1", features = ["v4"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "multipart", "json", "rustls-tls"] }
 
 [profile.release]
 strip = true
