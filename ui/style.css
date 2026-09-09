@@ -508,3 +508,24 @@ input, select { user-select: text; }
 select,select option{background:#1c232d;color:#e6edf8}
 @media(max-width:800px){.account-character[data-offset="-3"],.account-character[data-offset="3"]{display:none}.account-character[data-offset="-2"]{transform:translateX(-270px) scale(.4)}.account-character[data-offset="2"]{transform:translateX(70px) scale(.4)}.account-character[data-offset="-1"]{transform:translateX(-195px) scale(.6)}.account-character[data-offset="1"]{transform:translateX(-5px) scale(.6)}}
 .real-character{width:240px;height:390px}.account-character{bottom:-8px}
+
+/* All packs stay visible, with the selected skin in the right-hand preview. */
+#view-skins #skin-pack-tabs,.skin-pack-browser-header{display:none}
+#view-skins .pack-toolbar{justify-content:flex-end}
+#view-skins .skins-workspace{grid-template-columns:minmax(0,1fr) 310px;align-items:start;min-height:0}
+#view-skins .skin-pack-browser{grid-column:1;grid-row:1;padding:0;border:0;background:transparent;min-width:0}
+#view-skins .skin-feature-panel{grid-column:2;grid-row:1;position:sticky;top:0;min-height:540px}
+#view-skins #skin-grid{display:flex;flex-direction:column;gap:22px;max-height:calc(100vh - 225px);overflow:auto;padding:2px 8px 12px 2px}
+.pack-row-heading{background:none;border:0;color:#dce1e8;font:inherit;font-size:16px;font-weight:650;padding:0 0 9px;text-align:left;cursor:pointer}
+.pack-row-skins{display:flex;overflow-x:auto;background:#1c1f24;border:1px solid #343942;min-height:168px;padding:5px;gap:3px}
+.selected-pack .pack-row-heading{color:#91dbf3}
+.pack-row-skins .skin-tile{flex:0 0 96px;width:96px;min-width:0;max-width:96px;min-height:156px;border-radius:2px;background:#262a30;padding:5px;overflow:hidden}
+.pack-row-skins .pack-real-skin{height:128px;width:82px;object-fit:contain}
+.row-add-skin{flex:0 0 105px;border:1px solid #444b56;background:#30353d;color:#dce1e8;cursor:pointer;font:inherit}
+.row-add-skin:hover{background:#3b424c}.row-empty{padding:60px 20px;color:#87909d}
+.pack-row-heading:focus-visible,.row-add-skin:focus-visible{outline:2px solid #91dbf3;outline-offset:2px}
+#view-skins .skin-feature-actions{flex-wrap:wrap;padding-bottom:14px}
+@media(max-width:1000px){#view-skins .skins-workspace{grid-template-columns:minmax(0,1fr) 245px}}
+@media(max-width:740px){#view-skins .skins-workspace{grid-template-columns:minmax(0,1fr)}#view-skins .skin-feature-panel{grid-column:1;grid-row:2;position:static;min-height:350px}#view-skins .pack-toolbar-actions{flex-wrap:wrap}#view-skins #skin-grid{max-height:50vh}}
+
+#view-skins .skin-feature-top{flex-direction:column} .skin-name-input{width:100%;min-width:0;background:#1c2027;border:1px solid #39424e;border-radius:5px;color:#edf1f6;font:inherit;font-size:17px;font-weight:600;padding:9px;margin-top:8px} .skin-name-input:focus{outline:2px solid #91dbf3} #view-skins .skin-feature-top>div{width:100%;min-width:0} #view-skins .skin-preview-character,#view-skins #skin-preview-character{width:100%;height:360px;transform:none} #view-skins .pack-preview-image{position:static;transform:none;width:100%;height:100%;max-height:360px;object-fit:contain} #view-skins .skin-preview-stage{min-height:380px;padding:12px} .pack-row-skins .skin-tile span{display:block;max-width:100%;min-width:0}

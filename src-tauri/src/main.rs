@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod bridge;
+mod skins;
 use bridge::{Settings,Library,Mod};
 use std::{fs,path::PathBuf};
 
@@ -65,6 +66,6 @@ fn main() {
         let _=fs::write(output,serde_json::to_vec(&result).unwrap());return;
     }
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![library,get_settings,save_connection,launch,open_prism,mods,open_folder])
+        .invoke_handler(tauri::generate_handler![library,get_settings,save_connection,launch,open_prism,mods,open_folder,skins::read_skin_library,skins::save_skin_library,skins::process_and_save_texture,skins::read_skin_textures_batched,skins::generate_uuid])
         .run(tauri::generate_context!()).expect("Prism Studio could not start");
 }

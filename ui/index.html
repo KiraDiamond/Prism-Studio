@@ -189,7 +189,7 @@
                         <div class="skin-feature-top">
                             <div>
                                 <div class="section-kicker">SELECTED SKIN</div>
-                                <h3 id="selected-skin-name">No skin selected</h3>
+                                <input id="selected-skin-name" class="skin-name-input" aria-label="Skin name" placeholder="Name this skin" maxlength="60" autocomplete="off">
                             </div>
                             <span id="selected-skin-pack-label" class="muted-badge">All Old Skins</span>
                         </div>
@@ -209,6 +209,7 @@
 
                         <div class="skin-feature-actions">
                             <button class="btn btn-primary" disabled title="Requires backend skin support">Apply Skin</button>
+                            <button id="btn-remove-skin" class="btn btn-secondary" type="button">Remove from pack</button>
                             <button id="btn-add-skin-to-pack" class="btn btn-secondary">Add to Pack</button>
                         </div>
 
@@ -350,5 +351,6 @@
     </dialog>
 
     <script src="app.js"></script>
+    <script src="skin-library.js"></script>
 </body>
 </html>

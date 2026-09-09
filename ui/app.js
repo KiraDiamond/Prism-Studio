@@ -22,9 +22,9 @@ async function prepareAccountSkins() {
             const s=image.width/64;ctx.drawImage(image,8*s,8*s,8*s,8*s,0,0,32,32);ctx.drawImage(image,40*s,8*s,8*s,8*s,0,0,32,32);
             skinHeads.set(account.name,face.toDataURL('image/png'));
         }
-        const pack=state.skinPacks.find(p=>p.id==='all-old-skins');
-        if(pack){pack.name='Account skins';pack.skins=state.accounts.filter(a=>skinRenders.has(a.name)).map(a=>({id:'account-'+a.name,name:a.name,source:'Prism',render:skinRenders.get(a.name)}));}
-        renderHeaderAccounts();renderAccountCarousel();renderSkinPacks();
+        const pack=state.skinPacks.find(p=>p.id==='account-skins');
+        if(pack){pack.name='Account skins';pack.skins=state.accounts.filter(a=>skinRenders.has(a.name)).map(a=>({id:'account-'+a.name,name:a.name,source:'Prism',texture:a.skin,model:a.model||'default',render:skinRenders.get(a.name)}));}
+        renderHeaderAccounts();renderAccountCarousel();renderSkinPacks();saveSkinPacks();
     } catch(error) { console.error('Skin rendering failed',error); }
     finally { if(viewer){viewer.dispose();viewer.renderer.forceContextLoss();}renderingSkins=false; }
 }
@@ -88,7 +88,8 @@ function loadSkinPacks() {
 }
 
 function saveSkinPacks() {
-    localStorage.setItem('skin_packs_v1', JSON.stringify(state.skinPacks));
+    if (typeof persistSkinLibrary === 'function') persistSkinLibrary();
+    if (!skinStorageReady) localStorage.setItem('skin_packs_v1', JSON.stringify(state.skinPacks));
     localStorage.setItem('active_skin_pack', state.activeSkinPackId);
     localStorage.setItem('selected_skin_id', state.selectedSkinId || '');
 }
@@ -180,6 +181,7 @@ async function init() {
         showToast(`Failed to load settings: ${String(error)}`, 'error');
     }
 
+    await initSkinStorage();
     await fetchLibrary();
     renderSkinPacks();
 }
@@ -540,8 +542,8 @@ function renderAccountCarousel() {
         wrap.type='button';
         wrap.className='account-character';
         wrap.dataset.index=String(index);
-        wrap.dataset.offset=String(Math.max(-3,Math.min(3,offset)));
-        if (Math.abs(offset)>3) wrap.classList.add('hidden-character');
+        wrap.dataset.offset=String(Math.max(-2,Math.min(2,offset)));
+        if (Math.abs(offset)>2) wrap.classList.add('hidden-character');
         wrap.style.border='0';
         wrap.style.background='transparent';
         wrap.setAttribute('aria-label','Select '+account.name);wrap.setAttribute('aria-pressed',String(account.name===state.profile));
@@ -617,7 +619,7 @@ function renderSkinPacks() {
         const button=document.createElement('button');
         button.className=`pack-tab ${pack.id===state.activeSkinPackId?'active':''}`;
         button.dataset.packId=pack.id;
-        button.textContent=pack.name;
+        button.textContent=pack.name+' · '+pack.skins.length;
         els.skinPackTabs.appendChild(button);
     });
 
@@ -625,6 +627,8 @@ function renderSkinPacks() {
     els.activePackTitle.textContent=pack.name;
     els.activePackCount.textContent=`${pack.skins?.length || 0} skins`;
     els.btnDeleteSkinPack.disabled=!!pack.locked;
+    els.btnAddSkinFile.disabled=!!pack.locked;
+    document.getElementById('btn-remove-skin').disabled=!!pack.locked||!pack.skins.length;
     els.selectedSkinPackLabel.textContent=pack.name;
 
     renderSkinGrid(pack);
@@ -632,44 +636,34 @@ function renderSkinPacks() {
 
 function renderSkinGrid(pack) {
     els.skinGrid.replaceChildren();
-    const skins=Array.isArray(pack.skins)?pack.skins:[];
-
-    els.skinPackEmpty.classList.toggle('hidden',skins.length>0);
-    if (!skins.length) {
-        state.selectedSkinId='';
-        renderSelectedSkin(null,pack);
-        return;
+    els.skinPackEmpty.classList.add('hidden');
+    if(!pack.skins.some(s=>s.id===state.selectedSkinId))state.selectedSkinId=pack.skins[0]?.id||'';
+    for(const rowPack of state.skinPacks) {
+        const section=document.createElement('section');section.className='skin-pack-row';
+        section.classList.toggle('selected-pack',rowPack.id===pack.id);
+        const heading=document.createElement('button');heading.type='button';heading.className='pack-row-heading';heading.dataset.packId=rowPack.id;
+        heading.textContent=rowPack.name+' · '+rowPack.skins.length;heading.setAttribute('aria-pressed',String(rowPack.id===pack.id));
+        section.append(heading);
+        const row=document.createElement('div');row.className='pack-row-skins';
+        for(const skin of rowPack.skins) {
+            const tile=document.createElement('button');tile.type='button';tile.className='skin-tile';tile.dataset.skinId=skin.id;tile.dataset.packId=rowPack.id;
+            const selected=rowPack.id===pack.id&&skin.id===state.selectedSkinId;tile.classList.toggle('active',selected);tile.setAttribute('aria-pressed',String(selected));tile.setAttribute('aria-label',skin.name);
+            if(skin.render){const img=document.createElement('img');img.className='pack-real-skin';img.src=skin.render;img.alt='';row.append(tile);tile.append(img);}
+            const label=document.createElement('span');label.textContent=skin.name||'Unnamed skin';tile.append(label);row.append(tile);
+        }
+        if(!rowPack.locked){const add=document.createElement('button');add.type='button';add.className='row-add-skin';add.dataset.packId=rowPack.id;add.textContent='+ Add skin';row.append(add);}
+        else if(!rowPack.skins.length){const empty=document.createElement('span');empty.className='row-empty';empty.textContent='No skins';row.append(empty);}
+        section.append(row);els.skinGrid.append(section);
     }
-
-    if (!skins.some(s => s.id===state.selectedSkinId)) state.selectedSkinId=skins[0].id;
-
-    skins.forEach((skin,index) => {
-        const seed=skin.visual || createSkinVisualSeed(skin.name || `Skin ${index+1}`);
-        const tile=document.createElement('button');
-        tile.type='button';
-        tile.className=`skin-tile ${skin.id===state.selectedSkinId?'active':''}`;
-        tile.dataset.skinId=skin.id;
-        tile.innerHTML=`
-            <div class="skin-tile-character" style="--skin-a:${escapeHTML(seed.a)};--skin-b:${escapeHTML(seed.b)}">
-                <div class="voxel-head"></div><div class="voxel-body"></div>
-                <div class="voxel-arm voxel-arm-left"></div><div class="voxel-arm voxel-arm-right"></div>
-                <div class="voxel-leg voxel-leg-left"></div><div class="voxel-leg voxel-leg-right"></div>
-            </div>
-            <span>${escapeHTML(skin.name || 'Unnamed skin')}</span>
-        `;
-        if(skin.render){tile.querySelector('.skin-tile-character').outerHTML='<img class="pack-real-skin" src="'+escapeHTML(skin.render)+'" alt="">';}
-        els.skinGrid.appendChild(tile);
-    });
-
-    renderSelectedSkin(skinById(state.selectedSkinId),pack);
-    saveSkinPacks();
+    renderSelectedSkin(pack.skins.find(s=>s.id===state.selectedSkinId),pack);
 }
 
 function renderSelectedSkin(skin,pack=activeSkinPack()) {
     els.skinPreviewCharacter.classList.toggle('has-real-skin',!!skin?.render);
     els.skinPreviewCharacter.querySelector('.pack-preview-image')?.remove();
     if(skin?.render){const img=document.createElement('img');img.className='pack-preview-image';img.src=skin.render;img.alt=skin.name;els.skinPreviewCharacter.append(img);}
-    els.selectedSkinName.textContent=skin?.name || 'No skin selected';
+    els.selectedSkinName.value=skin?.name || '';
+    els.selectedSkinName.disabled=!skin;
     els.selectedSkinPackLabel.textContent=pack.name;
 
     const seed=skin?.visual || {a:'#59616d',b:'#2b3038'};
@@ -677,6 +671,12 @@ function renderSelectedSkin(skin,pack=activeSkinPack()) {
     els.skinPreviewCharacter.style.setProperty('--skin-b',seed.b);
 
     els.btnAddSkinToPack.disabled=!skin || state.skinPacks.length<2;
+}
+
+function nextSkinName() {
+    const used=new Set(state.skinPacks.flatMap(p=>p.skins.map(s=>s.name)));
+    let n=1;while(used.has(`Skin ${n}`))n++;
+    return `Skin ${n}`;
 }
 
 function readSkinFile(file) {
@@ -710,9 +710,9 @@ async function addSkinFiles(files) {
         for (const file of files) {
             try {
                 const texture=await readSkinFile(file);
-                const name=file.name.replace(/\.png$/i,'').slice(0,60) || `Skin ${pack.skins.length+1}`;
-                await viewer.loadSkin(texture,{model:'slim'});viewer.render();
-                pack.skins.push({id:slugId(name),name,source:'local file',texture,render:canvas.toDataURL('image/png'),model:'slim',visual:createSkinVisualSeed(name)});
+                const name=nextSkinName();
+                await viewer.loadSkin(texture,{model:'auto'});viewer.render();
+                pack.skins.push({id:slugId(name),name,source:'local file',texture,render:canvas.toDataURL('image/png'),model:viewer.playerObject.skin.modelType,visual:createSkinVisualSeed(name)});
                 added++;
             } catch(error) { showToast(`${file.name}: ${error.message}`,'error'); }
         }
@@ -722,7 +722,7 @@ async function addSkinFiles(files) {
 }
 
 function slugId(name) {
-    return `${String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'pack'}-${Date.now().toString(36)}`;
+    return crypto.randomUUID();
 }
 
 function createSkinPack(name) {
@@ -821,7 +821,7 @@ function addSelectedSkinToAnotherPack() {
     const skin=skinById(state.selectedSkinId);
     if (!skin) return;
 
-    const choices=state.skinPacks.filter(pack => pack.id!==state.activeSkinPackId);
+    const choices=state.skinPacks.filter(pack => !pack.locked && pack.id!==state.activeSkinPackId);
     if (!choices.length) return;
 
     const names=choices.map((p,i)=>`${i+1}. ${p.name}`).join('\n');
@@ -835,12 +835,7 @@ function addSelectedSkinToAnotherPack() {
         return;
     }
 
-    target.skins.push({
-        id:slugId(skin.name),
-        name:skin.name,
-        source:skin.source || 'copied',
-        visual:skin.visual || createSkinVisualSeed(skin.name)
-    });
+    target.skins.push({...skin});
     saveSkinPacks();
     showToast(`Added to "${target.name}"`,'success');
 }
@@ -1102,9 +1097,12 @@ function setupUIEvents() {
     });
 
     els.skinGrid.addEventListener('click',event=>{
-        const tile=event.target.closest('.skin-tile');
+        const tile=event.target.closest('[data-pack-id]');
         if (!tile) return;
-        state.selectedSkinId=tile.dataset.skinId;
+        const scroll=els.skinGrid.scrollTop;
+        state.activeSkinPackId=tile.dataset.packId;
+        state.selectedSkinId=tile.dataset.skinId||'';
+        if(tile.classList.contains('row-add-skin')){renderSkinPacks();els.skinFileInput.value='';els.skinFileInput.click();return;}
         saveSkinPacks();
         renderSkinPacks();
     });
@@ -1115,6 +1113,14 @@ function setupUIEvents() {
         setTimeout(()=>els.newPackName.focus(),0);
     });
 
+    document.getElementById('btn-remove-skin').addEventListener('click',()=>{const pack=activeSkinPack();if(pack.locked)return;pack.skins=pack.skins.filter(s=>s.id!==state.selectedSkinId);state.selectedSkinId='';saveSkinPacks();renderSkinPacks();});
+    els.selectedSkinName.addEventListener('change',()=>{
+        const skin=skinById(state.selectedSkinId);if(!skin)return;
+        const name=els.selectedSkinName.value.trim()||nextSkinName();
+        for(const pack of state.skinPacks)for(const entry of pack.skins)if(entry.id===skin.id)entry.name=name;
+        saveSkinPacks();renderSkinPacks();
+    });
+    els.selectedSkinName.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();els.selectedSkinName.blur();}});
     els.btnAddSkinFile.addEventListener('click',()=>{ els.skinFileInput.value='';els.skinFileInput.click(); });
     els.skinFileInput.addEventListener('change',()=>addSkinFiles([...els.skinFileInput.files]));
 
