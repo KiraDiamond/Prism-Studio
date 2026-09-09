@@ -100,7 +100,7 @@ fn icon_data(root: &Path, key: &str) -> Option<String> {
 pub fn read_library(settings: Settings) -> Result<Library, String> {
     let root = Path::new(&settings.root);
     let dir = configured_dir(root,"InstanceDir","instances");
-    let entries = fs::read_dir(&dir).map_err(|e|format!("Cannot open Prism library at {}: {e}",dir.display()))?;
+    let entries = fs::read_dir(&dir).map_err(|_|"Your Prism instance library could not be found or read. Choose the Prism data directory in Settings.")?;
     let mut warnings = Vec::new();
     let mut instances = Vec::new();
     let groups = json_file(&dir.join("instgroups.json")).unwrap_or(Value::Null);

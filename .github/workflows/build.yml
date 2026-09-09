@@ -1,0 +1,26 @@
+name: Windows build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Rust
+        run: rustup update stable
+      - run: npm ci
+      - run: npm run check
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Prism-Studio-Windows
+          path: src-tauri/target/release/bundle/nsis/*-setup.exe

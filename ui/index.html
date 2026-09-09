@@ -21,7 +21,7 @@
                 </svg>
                 <div class="brand-text">
                     <h1>Prism Studio</h1>
-                    <span>Play Different</span>
+                    
                 </div>
             </div>
 
@@ -177,6 +177,7 @@
                         <input id="skin-file-input" type="file" accept="image/png,.png" multiple hidden>
                         <button id="btn-create-skin-pack" class="btn btn-primary" type="button">+ New pack</button>
                         <button id="btn-share-skin-pack" class="btn btn-secondary">Share Pack</button>
+                        <button id="btn-rename-pack" class="btn btn-secondary" type="button">Rename Pack</button>
                         <button id="btn-delete-skin-pack" class="btn btn-secondary danger-soft">Delete Pack</button>
                     </div>
                 </div>
@@ -207,6 +208,7 @@
                         <div class="skin-feature-actions">
                             <button class="btn btn-primary" disabled title="Requires backend skin support">Apply Skin</button>
                             <button id="btn-remove-skin" class="btn btn-secondary" type="button">Remove from pack</button>
+                            <button id="btn-move-skin" class="btn btn-secondary" type="button">Move to Pack</button>
                             <button id="btn-add-skin-to-pack" class="btn btn-secondary">Add to Pack</button>
                         </div>
 
@@ -260,12 +262,12 @@
 
                         <div class="form-group">
                             <label for="setting-executable">Prism executable</label>
-                            <input type="text" id="setting-executable" placeholder="C:\Program Files\PrismLauncher\prismlauncher.exe">
+                            <input type="text" id="setting-executable" placeholder="Path to prismlauncher.exe">
                         </div>
 
                         <div class="form-group">
                             <label for="setting-root">Prism data folder</label>
-                            <input type="text" id="setting-root" placeholder="C:\Users\You\AppData\Roaming\PrismLauncher">
+                            <input type="text" id="setting-root" placeholder="Prism Launcher data directory">
                         </div>
 
                         <button id="btn-save-connection" class="btn btn-primary">Save & reconnect</button>
@@ -354,7 +356,9 @@
         </form>
     </dialog>
 
+    <dialog id="skin-destination-dialog" class="studio-dialog"><form method="dialog" id="skin-destination-form"><h3>Add skin to pack</h3><label for="skin-destination">Destination pack</label><select id="skin-destination"></select><div class="dialog-actions"><button class="btn btn-secondary" value="cancel">Cancel</button><button class="btn btn-primary" value="default">Save</button></div></form></dialog>
     <script src="app.js"></script>
     <script src="skin-library.js"></script>
+    <script src="skin-packs.js"></script>
 </body>
 </html>

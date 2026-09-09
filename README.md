@@ -1,43 +1,87 @@
-# Prism Studio
+﻿# Prism Studio
 
-A Carbon/Feather-inspired Windows desktop frontend for your existing Prism Launcher library. Compiled Rust backend, Tauri 2, and a small HTML/CSS/JavaScript interface rendered with Windows WebView2. No Node server, Electron, advertising, or telemetry at runtime.
+A polished Windows frontend for your existing Prism Launcher library.
 
-## Run
+Browse instances, choose a launch profile, and organize local Minecraft skins. Prism handles authentication, downloads, Java, mod loaders, installing instances, and advanced editing. This is an independent project, not an official Prism Launcher release.
 
-Open **Prism Studio.exe**. Keep Prism Launcher installed. Studio detects its usual Windows data folder and executable; use **Connection** to select a portable/custom installation.
+![Library](docs/screenshots/library.png)
 
-## Included
+## Install
 
-- Real Prism instances, icons, Minecraft versions, loaders, playtime, and groups (searchable).
-- Search, loader filtering, recent/name/playtime sorting, grid/list views, and saved favourites.
-- Existing account selection, including Prism's current default account on first run.
-- Launch through Prism; optional direct server joining from instance details.
-- Read-only installed-mod list with filtering and enabled/disabled status.
-- Open an instance folder or its editor in Prism.
-- Connection settings, explicit loading/error states, and keyboard navigation. Press `/` to search; Escape closes details.
+Requirements: Windows 10/11 (64-bit), Prism Launcher, and a Minecraft account configured in Prism. The installer can download Microsoft WebView2 if needed.
 
-## Boundaries
+1. Open [GitHub Releases](https://github.com/KiraDiamond/Prism-Studio/releases).
+2. Download the Windows Prism Studio x64 setup executable when a release is available.
+3. Run it, then open **Prism Studio** from Start.
 
-This is an independent frontend, not an embedded fork of Prism's C++ core. Launching uses the [documented Prism command-line interface](https://prismlauncher.org/wiki/getting-started/command-line-interface/): `--dir`, `--launch`, `--profile`, `--server`, and `--show`.
+Builds are unsigned, so Windows may show a publisher warning. Download only from this project's releases. If no installer is published yet, use the developer instructions below. Node.js and Rust are not required to use the installed application.
 
-Prism still handles authentication, downloads, Java, modloaders, installing packs, and advanced instance editing. Those operations may display Prism windows. A successful launch handoff means the Prism process started; it does not prove that Minecraft finished launching. Studio cannot eliminate a failure or hang inside Prism. The interface remains independent of that process.
+## First launch
 
-Account credentials are never sent to the frontend. Only profile names, the active flag, model type and cached PNG skin textures are returned. Studio reads Prism files and doesn't rewrite its instance or account configuration. Favourites, UI choices and server addresses are stored in Studio's WebView storage; connection settings are in `%APPDATA%\PrismStudio\connection.json`.
+Studio checks the usual Prism executable and data locations. If your library does not appear, open **Settings**, enter the path to prismlauncher.exe and your Prism data directory, then choose **Save & reconnect**. Portable installations work with their own executable and data directory.
 
-The account carousel renders the actual cached skins locally using skinview3d. Arrows select the next/previous account. The skin grid includes these account skins; applying a different Minecraft skin is not implemented. No remote skin API is needed. NMSR was reviewed as an alternative but is not integrated in this build.
+Sign in and create instances through Prism. Refresh Studio after changing your library or accounts there. Studio reads the library and launches through Prism's command-line interface; Prism may display its own windows.
+
+## Features
+
+- Instance and group search, loader filters, sorting and saved favourites.
+- Visual Grid, Compact and Detailed List share one saved preference between Settings and the toolbar.
+- Continue Playing and a side inspector with metadata, installed mods, optional server address, and Prism/folder actions.
+- Account carousel: arrows and head thumbnails browse. Click the centered character, press Enter, or choose **Use this profile** to select it for launch.
+- Press / to search and Escape to close details. Controls support keyboard focus.
+
+![Accounts](docs/screenshots/accounts.png)
+
+## Skins and packs
+
+![Skins](docs/screenshots/skins.png)
+
+Create a pack, then **Add skin** to import original 64x64 or legacy 64x32 PNGs, up to 1 MB each. Imported skins receive names such as **Skin 1**. Edit the selected skin's name to rename it. Custom packs support rename, delete, copy/move membership, removal, sharing and shared-pack import.
+
+**All Old Skins** permanently archives textures Studio has observed or imported. **Account Skins** represents current cached Prism skins. Studio cannot recover skins it never observed and Prism no longer has. Deleting a custom pack preserves archived textures.
+
+Original PNGs are content-deduplicated under %APPDATA%\PrismStudio\skins. Packs reference shared skin IDs. Shared packs include original textures, names and default/slim models; previews are generated locally. Back up the entire skins directory. library.bak retains the previous metadata save; legacy migration data is retained separately when present.
+
+**Apply Skin is unavailable.** Use Minecraft's supported tools to change your online skin. Collection and sharing do not change it.
+
+## Settings and privacy
+
+![Settings](docs/screenshots/settings.png)
+
+No telemetry, advertising, cloud account, local HTTP server or remote avatar service. Authentication tokens are not exposed to the frontend. Prism handles authentication. Skins stay local unless you share an exported pack.
+
+Studio does not rewrite Prism account or instance configuration. Connection settings and layout live under %APPDATA%\PrismStudio. Lightweight choices such as favourites, server addresses and profile selection use local WebView storage. Original skin textures live on disk, not indefinitely as browser base64 data.
+
+## Limitations
+
+- Pre-1.0 Windows release tested on one development machine, not every Windows PC.
+- No online Apply Skin and no replacement for Prism account/instance management.
+- A successful Play handoff means the Prism process started, not that Minecraft finished launching.
+- Installer signing and automatic release publishing are not configured.
+- Screenshots use demonstration data.
 
 ## Build from source
 
-Requires [Rust and Windows C++ build tools](https://v2.tauri.app/start/prerequisites/), Node.js for the build CLI, and WebView2. Node.js is not needed to run the compiled app.
+Requires Windows, current stable Rust (1.89 or newer), Visual Studio C++ Build Tools and Windows SDK, Node.js 22 or newer, and WebView2. Prism is required for integration testing.
 
-```text
-npm ci
-cargo test --manifest-path src-tauri/Cargo.toml
-npm run build
-```
+    git clone https://github.com/KiraDiamond/Prism-Studio.git
+    cd Prism-Studio
+    npm ci
+    npm run check
+    cargo test --manifest-path src-tauri/Cargo.toml
+    npm run build:ui
+    npm run build
 
-The executable is produced at `src-tauri/target/release/prism-studio.exe` (or `CARGO_TARGET_DIR/release/prism-studio.exe` when configured).
+Installer output: src-tauri/target/release/bundle/nsis/.
+Executable: src-tauri/target/release/prism-studio.exe.
+If CARGO_TARGET_DIR is set, use that target directory instead.
 
-For a sanitized connection diagnostic, run `prism-studio.exe --diagnose output.json`. This exports instance metadata, image data and profile names, never authentication tokens. Keep that output private if you do not want to share your profile names.
+npm run build:portable produces a release executable without an installer; WebView2 must already be installed. npm run tauri dev starts development mode.
 
-Independent personal project; not an official Prism Launcher, GDLauncher or Feather release.
+Architecture: Rust + Tauri 2 + WebView2 + static HTML/CSS/JavaScript. Node/esbuild are build tools only. The checked-in renderer bundle is rebuilt from skinview-entry.js. Windows CI checks, tests and builds the installer without signing or publishing it.
+
+See [VALIDATION.md](VALIDATION.md) for the test record.
+
+## License
+
+The owner has not selected an explicit project license. Do not assume an MIT/GPL or other redistribution grant for Prism Studio itself. Dependency licenses are separate: see [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), including skinview3d and three.js notices.

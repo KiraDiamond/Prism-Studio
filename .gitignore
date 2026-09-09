@@ -5,3 +5,19 @@ src-tauri/target/
 /Prism Studio Preview.exe
 /preview.png
 src-tauri/gen/
+
+*.tmp
+*.bak
+*.exe
+*.msi
+*.zip
+.env*
+!.env.example
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+LOCAL_AGENT_HANDOFF.md
+*Local Agent.cmd
+/release/
+/diagnostics/

@@ -2,8 +2,10 @@
 const skinRenders = new Map();
 const skinHeads = new Map();
 let renderingSkins = false;
+let renderAccountsAgain = false;
+const accountSkinSources = new Map();
 async function prepareAccountSkins() {
-    if (renderingSkins) return;
+    if (renderingSkins) {renderAccountsAgain=true;return;}
     renderingSkins = true;
     let viewer;
     try {
@@ -13,8 +15,9 @@ async function prepareAccountSkins() {
         viewer.globalLight.intensity=2.8;viewer.cameraLight.intensity=.7;
         viewer.playerObject.rotation.y=.18;
         for (const account of state.accounts) {
-            if (!account.skin || skinRenders.has(account.name)) continue;
+            if (!account.skin || accountSkinSources.get(account.name)===account.skin+account.model) continue;
             await viewer.loadSkin(account.skin,{model:account.model||'default'});
+            accountSkinSources.set(account.name,account.skin+account.model);
             viewer.render();skinRenders.set(account.name,canvas.toDataURL('image/png'));
             const image = new Image();image.src=account.skin;await image.decode();
             const face=document.createElement('canvas');face.width=32;face.height=32;
@@ -22,24 +25,18 @@ async function prepareAccountSkins() {
             const s=image.width/64;ctx.drawImage(image,8*s,8*s,8*s,8*s,0,0,32,32);ctx.drawImage(image,40*s,8*s,8*s,8*s,0,0,32,32);
             skinHeads.set(account.name,face.toDataURL('image/png'));
         }
-        const pack=state.skinPacks.find(p=>p.id==='account-skins');
-        if(pack){pack.name='Account skins';pack.skins=state.accounts.filter(a=>skinRenders.has(a.name)).map(a=>({id:'account-'+a.name,name:a.name,source:'Prism',texture:a.skin,model:a.model||'default',render:skinRenders.get(a.name)}));}
-        renderHeaderAccounts();renderAccountCarousel();renderSkinPacks();saveSkinPacks();
+        await archiveAccountSkins();
+        renderHeaderAccounts();renderAccountCarousel();renderSkinPacks();
     } catch(error) { console.error('Skin rendering failed',error); }
-    finally { if(viewer){viewer.dispose();viewer.renderer.forceContextLoss();}renderingSkins=false; }
+    finally { if(viewer){viewer.dispose();viewer.renderer.forceContextLoss();}renderingSkins=false;if(renderAccountsAgain){renderAccountsAgain=false;prepareAccountSkins();} }
 }
 // Prism Studio Frontend — Character Select + Skin Packs
 // Uses only the existing Tauri backend commands.
-// Skin pack creation/import/share is stored locally in the frontend.
+// Skin data is persisted by the Rust backend; only lightweight UI choices use WebView storage.
 
-const invoke = window.__TAURI__?.core?.invoke || async function mockInvoke(cmd, args) {
-    console.warn(`[Mock Tauri] ${cmd}`, args);
-    if (cmd === 'library') return { instances: [], accounts: [], settings: { root: '', executable: '' }, warnings: [], executableFound: false };
-    if (cmd === 'get_settings') return { root: '', executable: '' };
-    if (cmd === 'mods') return [];
-    if (cmd === 'save_connection') return { instances: [], accounts: [], settings: { root: '', executable: '' }, warnings: [], executableFound: true };
-    if (cmd === 'launch') return 'Launch request sent to Prism';
-    return null;
+const invoke = async (command,args) => {
+    if(!window.__TAURI__?.core?.invoke)throw new Error('Open the installed Prism Studio application.');
+    return window.__TAURI__.core.invoke(command,args);
 };
 
 function loadJsonPreference(key, fallback) {
@@ -52,7 +49,8 @@ function loadJsonPreference(key, fallback) {
 }
 
 const DEFAULT_SKIN_PACKS = [
-    { id: 'all-old-skins', name: 'All Old Skins', locked: true, skins: [] }
+    { id: 'all-old-skins', name: 'All Old Skins', locked: true, skins: [] },
+    { id: 'account-skins', name: 'Account Skins', locked: true, skins: [] }
 ];
 
 const state = {
@@ -80,16 +78,12 @@ const state = {
 };
 
 function loadSkinPacks() {
-    const stored = loadJsonPreference('skin_packs_v1', null);
-    if (!Array.isArray(stored) || !stored.length) return structuredClone(DEFAULT_SKIN_PACKS);
-
-    const hasOld = stored.some(pack => pack?.id === 'all-old-skins');
-    return hasOld ? stored : [structuredClone(DEFAULT_SKIN_PACKS[0]), ...stored];
+    return structuredClone(DEFAULT_SKIN_PACKS);
 }
 
 function saveSkinPacks() {
     if (typeof persistSkinLibrary === 'function') persistSkinLibrary();
-    if (!skinStorageReady) localStorage.setItem('skin_packs_v1', JSON.stringify(state.skinPacks));
+
     localStorage.setItem('active_skin_pack', state.activeSkinPackId);
     localStorage.setItem('selected_skin_id', state.selectedSkinId || '');
 }
@@ -400,6 +394,8 @@ function createInstanceCard(instance) {
     const card = document.createElement('article');
     card.className = `card ${state.selectedId === instance.id ? 'selected' : ''}`;
     card.dataset.id = instance.id;
+    card.tabIndex=0;card.setAttribute('aria-label','Details for '+instance.name);
+    card.addEventListener('keydown',event=>{if(event.target===card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();selectInstance(instance.id);}});
 
     const isFavourite = state.favorites.has(instance.id);
     const isLaunching = state.launching.has(instance.id);
@@ -447,6 +443,19 @@ function applyInstanceArtwork(backgroundElement, imageElement, instance) {
     }
 }
 
+function formatHeroLastPlayed(timestamp) {
+    if (!timestamp) return 'Never';
+
+    const diffMs = Date.now() - timestamp;
+    const days = Math.floor(diffMs / 86400000);
+
+    if (days <= 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+
+    return new Date(timestamp).toLocaleDateString();
+}
+
 function renderHero() {
     if (state.currentFilter !== 'all' || state.searchQuery || !state.instances.length) {
         els.hero.style.display = 'none';
@@ -454,27 +463,89 @@ function renderHero() {
         return;
     }
 
-    const instance = [...state.instances].sort((a,b) => (b.lastLaunch || 0) - (a.lastLaunch || 0))[0];
+    const instance = [...state.instances]
+        .sort((a, b) => (b.lastLaunch || 0) - (a.lastLaunch || 0))[0];
+
+    if (!instance || !instance.lastLaunch) {
+        els.hero.style.display = 'none';
+        els.hero.replaceChildren();
+        return;
+    }
+
     const isLaunching = state.launching.has(instance.id);
+    const isFavourite = state.favorites.has(instance.id);
+
+    const name = escapeHTML(instance.name || 'Unknown');
+    const id = escapeHTML(instance.id);
+    const version = escapeHTML(instance.version || 'Unknown');
+    const loader = escapeHTML(instance.loader || 'Vanilla');
+    const playtime = escapeHTML(formatPlaytime(instance.playtime));
+    const lastPlayed = escapeHTML(formatHeroLastPlayed(instance.lastLaunch));
 
     els.hero.style.display = 'block';
+
     els.hero.innerHTML = `
-        <div class="hero-bg"></div><div class="hero-vignette"></div>
-        <div class="hero-content">
-            <div class="hero-info">
-                <div class="section-kicker">CONTINUE PLAYING</div>
-                <h1>${escapeHTML(instance.name || 'Unknown')}</h1>
-                <div class="hero-meta-line">${escapeHTML(instance.version || 'Unknown')} · ${escapeHTML(instance.loader || 'Vanilla')} · ${escapeHTML(formatPlaytime(instance.playtime))} played</div>
-                <div class="hero-actions">
-                    <button class="btn hero-play" data-action="hero-play" data-id="${escapeHTML(instance.id)}" ${isLaunching?'disabled':''}>${isLaunching?'Launching…':'Play'}</button>
-                    <button class="btn btn-secondary" data-action="hero-details" data-id="${escapeHTML(instance.id)}">View details</button>
+        <div class="hero-bg" hidden></div>
+
+        <div class="hero-compact">
+            <div class="section-kicker hero-compact-kicker">CONTINUE PLAYING</div>
+
+            <div class="hero-compact-row">
+                <img class="hero-crisp-icon hero-compact-icon" alt="">
+
+                <div class="hero-compact-main">
+                    <div class="hero-compact-identity">
+                        <div class="hero-compact-name">${name}</div>
+                        <div class="hero-compact-meta">${loader} · ${version}</div>
+                    </div>
+
+                    <div class="hero-compact-actions">
+                        <button
+                            class="btn hero-play"
+                            data-action="hero-play"
+                            data-id="${id}"
+                            aria-label="Play ${name}"
+                            ${isLaunching ? 'disabled' : ''}
+                        >
+                            ${isLaunching ? 'Launching…' : 'Play'}
+                        </button>
+
+                        <button
+                            class="btn btn-secondary"
+                            data-action="hero-details"
+                            data-id="${id}"
+                            aria-label="View details for ${name}"
+                        >
+                            Details
+                        </button>
+                    </div>
                 </div>
+
+                <div class="hero-compact-stats">
+                    <span>${lastPlayed}</span>
+                    <span class="hero-stat-separator">•</span>
+                    <span>${playtime} played</span>
+                </div>
+
+                <button
+                    class="hero-compact-favourite ${isFavourite ? 'active' : ''}"
+                    data-action="favorite"
+                    data-id="${id}"
+                    aria-label="${isFavourite ? `Remove ${name} from favourites` : `Add ${name} to favourites`}"
+                    aria-pressed="${isFavourite}"
+                    title="${isFavourite ? 'Remove from favourites' : 'Add to favourites'}"
+                >
+                    ★
+                </button>
             </div>
-            <div class="hero-art"><img class="hero-crisp-icon" alt=""></div>
         </div>
     `;
 
-    applyInstanceArtwork(els.hero.querySelector('.hero-bg'), els.hero.querySelector('.hero-crisp-icon'), instance);
+    applyInstanceArtwork(
+        els.hero.querySelector('.hero-bg'),
+        els.hero.querySelector('.hero-crisp-icon'),
+        instance
+    );
 }
 
 function renderEmptyState(title, body, actions) {
@@ -505,10 +576,6 @@ function renderConnectionError() {
 
 /* ---------------- Accounts character selector ---------------- */
 
-const CHARACTER_PALETTES = [
-    ['#394552','#1f252c'], ['#6b5f67','#332e34'], ['#615063','#2d2631'], ['#5a3f39','#211817'],
-    ['#715b5a','#312526'], ['#4a5967','#202934'], ['#685943','#2f291e'], ['#4e435d','#24202b']
-];
 
 function renderHeaderAccounts() {
     els.headerAccountSelect.replaceChildren();
@@ -527,7 +594,7 @@ function renderHeaderAccounts() {
     });
     const face=skinHeads.get(state.profile);
     els.headerAccountAvatar.innerHTML=face ? '<img src="'+face+'" alt="">' : '';
-    els.headerAccountAvatar.onclick=()=>showView('accounts');
+
 }
 
 function syncAccountCarouselToProfile() {
@@ -572,7 +639,7 @@ function renderAccountCarousel() {
         wrap.style.border='0';
         wrap.style.background='transparent';
         wrap.setAttribute('aria-label','Select '+account.name);wrap.setAttribute('aria-pressed',String(account.name===state.profile));
-        wrap.tabIndex=Math.abs(offset)>3?-1:0;
+        wrap.tabIndex=Math.abs(offset)>2?-1:0;
         wrap.innerHTML=blockCharacterMarkup(account,index);
         els.accountCarousel.appendChild(wrap);
 
@@ -605,264 +672,7 @@ function moveAccountCarousel(delta) {
     if (!state.accounts.length) return;
     const total=state.accounts.length;
     state.accountCarouselIndex=(state.accountCarouselIndex+delta+total)%total;
-    setProfile(state.accounts[state.accountCarouselIndex].name);
-}
-
-/* ---------------- Skin Packs ---------------- */
-
-function ensureActiveSkinPack() {
-    if (!state.skinPacks.some(pack => pack.id===state.activeSkinPackId)) {
-        state.activeSkinPackId='all-old-skins';
-    }
-}
-
-function activeSkinPack() {
-    return state.skinPacks.find(pack => pack.id===state.activeSkinPackId) || state.skinPacks[0];
-}
-
-function allSkinsFlat() {
-    return state.skinPacks.flatMap(pack => (pack.skins || []).map(skin => ({...skin,packId:pack.id,packName:pack.name})));
-}
-
-function skinById(id) {
-    return allSkinsFlat().find(skin => skin.id===id) || null;
-}
-
-function createSkinVisualSeed(name) {
-    let hash=0;
-    for (const ch of String(name)) hash=((hash<<5)-hash)+ch.charCodeAt(0)|0;
-    const hues=[210,250,330,20,160,45,285,195];
-    const h=hues[Math.abs(hash)%hues.length];
-    return { a:`hsl(${h} 18% 48%)`, b:`hsl(${(h+20)%360} 20% 20%)` };
-}
-
-function renderSkinPacks() {
-    ensureActiveSkinPack();
-    els.skinPackTabs.replaceChildren();
-
-    state.skinPacks.forEach(pack => {
-        const button=document.createElement('button');
-        button.className=`pack-tab ${pack.id===state.activeSkinPackId?'active':''}`;
-        button.dataset.packId=pack.id;
-        button.textContent=pack.name+' · '+pack.skins.length;
-        els.skinPackTabs.appendChild(button);
-    });
-
-    const pack=activeSkinPack();
-    els.activePackTitle.textContent=pack.name;
-    els.activePackCount.textContent=`${pack.skins?.length || 0} skins`;
-    els.btnDeleteSkinPack.disabled=!!pack.locked;
-    els.btnAddSkinFile.disabled=!!pack.locked;
-    document.getElementById('btn-remove-skin').disabled=!!pack.locked||!pack.skins.length;
-    els.selectedSkinPackLabel.textContent=pack.name;
-
-    renderSkinGrid(pack);
-}
-
-function renderSkinGrid(pack) {
-    els.skinGrid.replaceChildren();
-    els.skinPackEmpty.classList.add('hidden');
-    if(!pack.skins.some(s=>s.id===state.selectedSkinId))state.selectedSkinId=pack.skins[0]?.id||'';
-    for(const rowPack of state.skinPacks) {
-        const section=document.createElement('section');section.className='skin-pack-row';
-        section.classList.toggle('selected-pack',rowPack.id===pack.id);
-        const heading=document.createElement('button');heading.type='button';heading.className='pack-row-heading';heading.dataset.packId=rowPack.id;
-        heading.textContent=rowPack.name+' · '+rowPack.skins.length;heading.setAttribute('aria-pressed',String(rowPack.id===pack.id));
-        section.append(heading);
-        const row=document.createElement('div');row.className='pack-row-skins';
-        for(const skin of rowPack.skins) {
-            const tile=document.createElement('button');tile.type='button';tile.className='skin-tile';tile.dataset.skinId=skin.id;tile.dataset.packId=rowPack.id;
-            const selected=rowPack.id===pack.id&&skin.id===state.selectedSkinId;tile.classList.toggle('active',selected);tile.setAttribute('aria-pressed',String(selected));tile.setAttribute('aria-label',skin.name);
-            if(skin.render){const img=document.createElement('img');img.className='pack-real-skin';img.src=skin.render;img.alt='';row.append(tile);tile.append(img);}
-            const label=document.createElement('span');label.textContent=skin.name||'Unnamed skin';tile.append(label);row.append(tile);
-        }
-        if(!rowPack.locked){const add=document.createElement('button');add.type='button';add.className='row-add-skin';add.dataset.packId=rowPack.id;add.textContent='+ Add skin';row.append(add);}
-        else if(!rowPack.skins.length){const empty=document.createElement('span');empty.className='row-empty';empty.textContent='No skins';row.append(empty);}
-        section.append(row);els.skinGrid.append(section);
-    }
-    renderSelectedSkin(pack.skins.find(s=>s.id===state.selectedSkinId),pack);
-}
-
-function renderSelectedSkin(skin,pack=activeSkinPack()) {
-    els.skinPreviewCharacter.classList.toggle('has-real-skin',!!skin?.render);
-    els.skinPreviewCharacter.querySelector('.pack-preview-image')?.remove();
-    if(skin?.render){const img=document.createElement('img');img.className='pack-preview-image';img.src=skin.render;img.alt=skin.name;els.skinPreviewCharacter.append(img);}
-    els.selectedSkinName.value=skin?.name || '';
-    els.selectedSkinName.disabled=!skin;
-    els.selectedSkinPackLabel.textContent=pack.name;
-
-    const seed=skin?.visual || {a:'#59616d',b:'#2b3038'};
-    els.skinPreviewCharacter.style.setProperty('--skin-a',seed.a);
-    els.skinPreviewCharacter.style.setProperty('--skin-b',seed.b);
-
-    els.btnAddSkinToPack.disabled=!skin || state.skinPacks.length<2;
-}
-
-function nextSkinName() {
-    const used=new Set(state.skinPacks.flatMap(p=>p.skins.map(s=>s.name)));
-    let n=1;while(used.has(`Skin ${n}`))n++;
-    return `Skin ${n}`;
-}
-
-function readSkinFile(file) {
-    return new Promise((resolve,reject)=>{
-        if (!file || file.type !== 'image/png' || file.size > 2_000_000) return reject(new Error('Choose a PNG skin under 2 MB'));
-        const reader=new FileReader();
-        reader.onerror=()=>reject(new Error('Could not read the PNG'));
-        reader.onload=()=>{
-            const image=new Image();
-            image.onerror=()=>reject(new Error('That file is not a valid PNG'));
-            image.onload=()=>{
-                if (image.width!==64 || ![32,64].includes(image.height)) return reject(new Error('Skin must be 64x64 or legacy 64x32'));
-                resolve(String(reader.result));
-            };
-            image.src=String(reader.result);
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
-async function addSkinFiles(files) {
-    const pack=activeSkinPack();
-    if (!pack || pack.locked) { showToast('Select an unlocked skin pack first','warning'); return; }
-    let viewer;
-    try {
-        const {SkinViewer}=await import('./skinview.bundle.js');
-        const canvas=document.createElement('canvas');
-        viewer=new SkinViewer({canvas,width:260,height:420,pixelRatio:1,zoom:.9,fov:35,enableControls:false,renderPaused:true,preserveDrawingBuffer:true});
-        viewer.globalLight.intensity=2.8;viewer.cameraLight.intensity=.7;viewer.playerObject.rotation.y=.18;
-        let added=0;
-        for (const file of files) {
-            try {
-                const texture=await readSkinFile(file);
-                const name=nextSkinName();
-                await viewer.loadSkin(texture,{model:'auto'});viewer.render();
-                pack.skins.push({id:slugId(name),name,source:'local file',texture,render:canvas.toDataURL('image/png'),model:viewer.playerObject.skin.modelType,visual:createSkinVisualSeed(name)});
-                added++;
-            } catch(error) { showToast(`${file.name}: ${error.message}`,'error'); }
-        }
-        if (added) { state.selectedSkinId=pack.skins[pack.skins.length-added].id;saveSkinPacks();renderSkinPacks();showToast(`Added ${added} skin${added===1?'':'s'}`,'success'); }
-    } catch(error) { showToast(`Could not load skin renderer: ${error.message}`,'error'); }
-    finally { if(viewer){viewer.dispose();viewer.renderer.forceContextLoss();} }
-}
-
-function slugId(name) {
-    return crypto.randomUUID();
-}
-
-function createSkinPack(name) {
-    const trimmed=name.trim();
-    if (!trimmed) return;
-    const pack={id:slugId(trimmed),name:trimmed,locked:false,skins:[]};
-    state.skinPacks.push(pack);
-    state.activeSkinPackId=pack.id;
-    state.selectedSkinId='';
-    saveSkinPacks();
-    renderSkinPacks();
-    showToast(`Created "${trimmed}"`,'success');
-}
-
-async function importSkinPackFile(file) {
-    try {
-        const text=await file.text();
-        const parsed=JSON.parse(text);
-        const raw=parsed.pack || parsed;
-
-        if (!raw || typeof raw.name!=='string' || !Array.isArray(raw.skins)) {
-            throw new Error('Not a valid Prism Studio skin pack');
-        }
-
-        const pack={
-            id:slugId(raw.name),
-            name:raw.name.slice(0,40),
-            locked:false,
-            skins:raw.skins.slice(0,500).map((skin,index) => ({
-                id:slugId(skin?.name || `Skin ${index+1}`),
-                name:String(skin?.name || `Skin ${index+1}`).slice(0,60),
-                source:skin?.source || 'shared',
-                texture:typeof skin?.texture==='string'&&skin.texture.startsWith('data:image/png;base64,')&&skin.texture.length<200000?skin.texture:null,
-                render:typeof skin?.render==='string'&&skin.render.startsWith('data:image/png;base64,')&&skin.render.length<200000?skin.render:null,
-                model:skin?.model==='default'?'default':'slim',
-                visual:skin?.visual && typeof skin.visual.a==='string' && typeof skin.visual.b==='string'
-                    ? {a:skin.visual.a,b:skin.visual.b}
-                    : createSkinVisualSeed(skin?.name || String(index))
-            }))
-        };
-
-        state.skinPacks.push(pack);
-        state.activeSkinPackId=pack.id;
-        state.selectedSkinId=pack.skins[0]?.id || '';
-        saveSkinPacks();
-        renderSkinPacks();
-        showToast(`Imported "${pack.name}"`,'success');
-    } catch (error) {
-        showToast(`Import failed: ${String(error)}`,'error');
-    }
-}
-
-function shareActiveSkinPack() {
-    const pack=activeSkinPack();
-    const payload={
-        format:'prism-studio-skin-pack',
-        version:1,
-        pack:{
-            name:pack.name,
-            skins:(pack.skins || []).map(skin => ({
-                name:skin.name,
-                source:skin.source || 'local',
-                texture:skin.texture || null,
-                render:skin.render || null,
-                model:skin.model || 'slim',
-                visual:skin.visual || createSkinVisualSeed(skin.name)
-            }))
-        }
-    };
-
-    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const anchor=document.createElement('a');
-    anchor.href=url;
-    anchor.download=`${pack.name.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'') || 'skin-pack'}.prism-skinpack.json`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    showToast('Shared pack file created','success');
-}
-
-function deleteActiveSkinPack() {
-    const pack=activeSkinPack();
-    if (pack.locked) return;
-    if (!confirm(`Delete skin pack "${pack.name}"?`)) return;
-
-    state.skinPacks=state.skinPacks.filter(p => p.id!==pack.id);
-    state.activeSkinPackId='all-old-skins';
-    state.selectedSkinId='';
-    saveSkinPacks();
-    renderSkinPacks();
-}
-
-function addSelectedSkinToAnotherPack() {
-    const skin=skinById(state.selectedSkinId);
-    if (!skin) return;
-
-    const choices=state.skinPacks.filter(pack => !pack.locked && pack.id!==state.activeSkinPackId);
-    if (!choices.length) return;
-
-    const names=choices.map((p,i)=>`${i+1}. ${p.name}`).join('\n');
-    const answer=prompt(`Add "${skin.name}" to which pack?\n${names}\n\nEnter the number:`);
-    const index=Number(answer)-1;
-    if (!Number.isInteger(index) || index<0 || index>=choices.length) return;
-
-    const target=choices[index];
-    if (target.skins.some(s=>s.name===skin.name)) {
-        showToast('That skin is already in the pack','warning');
-        return;
-    }
-
-    target.skins.push({...skin});
-    saveSkinPacks();
-    showToast(`Added to "${target.name}"`,'success');
+    renderAccountCarousel();
 }
 
 /* ---------------- Inspector/actions ---------------- */
@@ -948,6 +758,8 @@ function toggleFavorite(id) {
     }
     renderFilters();
     if (state.currentFilter==='favourites') renderLibrary();
+
+    renderHero();
 }
 
 async function launchInstance(targetId, server='', persistServerPreference=false) {
@@ -1089,6 +901,7 @@ function setupUIEvents() {
         const id=button.dataset.id;
         if (button.dataset.action==='hero-play') launchInstance(id,'',false);
         else if (button.dataset.action==='hero-details') selectInstance(id);
+        else if(button.dataset.action==='favorite')toggleFavorite(id);
     });
 
     els.headerAccountSelect.addEventListener('change',event=>setProfile(event.target.value));
@@ -1099,15 +912,16 @@ function setupUIEvents() {
     els.accountCarousel.addEventListener('click',event=>{
         const character=event.target.closest('.account-character');
         if (character) {
-            state.accountCarouselIndex=Number(character.dataset.index);
-            setProfile(state.accounts[state.accountCarouselIndex].name);
+            const index=Number(character.dataset.index);
+            if(index===state.accountCarouselIndex) setProfile(state.accounts[index].name);
+            else { state.accountCarouselIndex=index; renderAccountCarousel(); }
         }
     });
     els.accountRoster.addEventListener('click',event=>{
         const chip=event.target.closest('.roster-chip');
         if (chip) {
             state.accountCarouselIndex=Number(chip.dataset.index);
-            setProfile(state.accounts[state.accountCarouselIndex].name);
+            renderAccountCarousel();
         }
     });
 
@@ -1123,7 +937,7 @@ function setupUIEvents() {
     els.skinGrid.addEventListener('click',event=>{
         const tile=event.target.closest('[data-pack-id]');
         if (!tile) return;
-        const scroll=els.skinGrid.scrollTop;
+
         state.activeSkinPackId=tile.dataset.packId;
         state.selectedSkinId=tile.dataset.skinId||'';
         if(tile.classList.contains('row-add-skin')){renderSkinPacks();els.skinFileInput.value='';els.skinFileInput.click();return;}
@@ -1132,6 +946,9 @@ function setupUIEvents() {
     });
 
     els.btnCreateSkinPack.addEventListener('click',()=>{
+        delete els.createPackForm.dataset.renameId;
+        els.createPackDialog.querySelector('h3').textContent='New skin pack';
+        els.confirmCreatePack.textContent='Create pack';
         els.newPackName.value='';
         els.createPackDialog.showModal();
         setTimeout(()=>els.newPackName.focus(),0);
@@ -1150,9 +967,14 @@ function setupUIEvents() {
 
     els.createPackForm.addEventListener('submit',event=>{
         event.preventDefault();
+        if(event.submitter?.value==='cancel'){els.createPackDialog.close();return;}
         const name=els.newPackName.value;
         if (!name.trim()) return;
-        createSkinPack(name);
+        const renameId=els.createPackForm.dataset.renameId;
+        if(renameId){
+            const pack=state.skinPacks.find(p=>p.id===renameId);
+            if(pack&&!pack.locked){pack.name=name.trim().slice(0,40);saveSkinPacks();renderSkinPacks();}
+        }else createSkinPack(name);
         els.createPackDialog.close();
     });
 
@@ -1163,10 +985,17 @@ function setupUIEvents() {
         els.skinPackFileInput.value='';
     });
 
-    els.btnShareSkinPack.addEventListener('click',shareActiveSkinPack);
+    els.btnShareSkinPack.addEventListener('click',()=>shareActiveSkinPack().catch(error=>showToast(String(error),'error')));
+    document.getElementById('btn-rename-pack').addEventListener('click',renameActivePack);
+    document.getElementById('btn-move-skin').addEventListener('click',()=>chooseSkinDestination(true));
     els.btnDeleteSkinPack.addEventListener('click',deleteActiveSkinPack);
-    els.btnAddSkinToPack.addEventListener('click',addSelectedSkinToAnotherPack);
+    els.btnAddSkinToPack.addEventListener('click',()=>chooseSkinDestination(false));
 
+    document.getElementById('skin-destination-form').addEventListener('submit',async event=>{
+        event.preventDefault();const dialog=document.getElementById('skin-destination-dialog');
+        if(event.submitter?.value==='cancel'){dialog.close();return;}
+        try{await transferSkin(dialog.dataset.source,dialog.dataset.skin,document.getElementById('skin-destination').value,dialog.dataset.move==='true');dialog.close();}catch(error){showToast(String(error),'error');}
+    });
     els.btnSaveConnection.addEventListener('click',saveConnectionSettings);
     els.btnCloseInspector.addEventListener('click',closeInspector);
     els.inspFav.addEventListener('click',()=>{ if (state.selectedId) toggleFavorite(state.selectedId); });
@@ -1204,9 +1033,9 @@ function setupUIEvents() {
 
         const accountsActive=document.getElementById('view-accounts').classList.contains('active');
         if (accountsActive&&!editable) {
-            if (event.key==='ArrowLeft') moveAccountCarousel(-1);
-            if (event.key==='ArrowRight') moveAccountCarousel(1);
-            if (event.key==='Enter'&&state.accounts[state.accountCarouselIndex]) setProfile(state.accounts[state.accountCarouselIndex].name);
+            if (event.key==='ArrowLeft'){event.preventDefault();moveAccountCarousel(-1);}
+            if (event.key==='ArrowRight'){event.preventDefault();moveAccountCarousel(1);}
+            if (event.key==='Enter'&&active?.tagName!=='BUTTON'&&state.accounts[state.accountCarouselIndex]) setProfile(state.accounts[state.accountCarouselIndex].name);
         }
     });
 }

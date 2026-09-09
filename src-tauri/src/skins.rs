@@ -5,6 +5,10 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::Mutex;
 static STORAGE: Mutex<()> = Mutex::new(());
+fn storage_file_lock() -> Result<File,String> {
+    let file=fs::OpenOptions::new().create(true).truncate(false).read(true).write(true).open(get_skins_dir()?.join("library.lock")).map_err(|e|e.to_string())?;
+    file.try_lock().map_err(|_|"Another Prism Studio window is saving skins. Try again.")?;Ok(file)
+}
 use sha2::{Sha256, Digest};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 
@@ -71,6 +75,7 @@ fn validate_png_and_get_hash(bytes: &[u8]) -> Result<String, String> {
 #[tauri::command]
 pub fn read_skin_library() -> Result<SkinLibrary, String> {
     let _guard = STORAGE.lock().map_err(|_| "Storage lock failed")?;
+    let _file_lock = storage_file_lock()?;
     let lib_path = get_skins_dir()?.join("library.json");
     if !lib_path.exists() && lib_path.with_extension("bak").exists() {
         fs::rename(lib_path.with_extension("bak"), &lib_path).map_err(|e| e.to_string())?;
@@ -78,7 +83,8 @@ pub fn read_skin_library() -> Result<SkinLibrary, String> {
     if lib_path.exists() {
         if fs::metadata(&lib_path).map_err(|e| e.to_string())?.len() > 8_000_000 { return Err("Library too large".into()); }
         let data = fs::read_to_string(lib_path).map_err(|e| e.to_string())?;
-        let library: SkinLibrary = serde_json::from_str(&data).map_err(|e| e.to_string())?;
+        let mut library: SkinLibrary = serde_json::from_str(&data).map_err(|_| "Skin library is damaged. Restore library.bak before editing.")?;
+        for pack in &mut library.packs {if pack.id=="account-skins" && pack.name=="Account skins" {pack.name="Account Skins".into();}}
         validate_library(&library)?;
         Ok(library)
     } else {
@@ -95,9 +101,17 @@ pub fn read_skin_library() -> Result<SkinLibrary, String> {
 #[tauri::command]
 pub fn save_skin_library(library: SkinLibrary) -> Result<(), String> {
     let _guard = STORAGE.lock().map_err(|_| "Storage lock failed")?;
+    let _file_lock = storage_file_lock()?;
     validate_library(&library)?;
     // Serialized replacement with rollback; not an atomic Windows transaction.
     let lib_path = get_skins_dir()?.join("library.json");
+    if lib_path.exists() {
+        let old:SkinLibrary=serde_json::from_slice(&fs::read(&lib_path).map_err(|e|e.to_string())?).map_err(|_|"Existing skin library is damaged; refusing to overwrite it.")?;
+        let old_textures:HashSet<_>=old.packs.iter().find(|p|p.id=="all-old-skins").into_iter().flat_map(|p|&p.skins).filter_map(|id|old.skins.get(id).map(|s|&s.texture_id)).collect();
+        let new_textures:HashSet<_>=library.packs.iter().find(|p|p.id=="all-old-skins").into_iter().flat_map(|p|&p.skins).filter_map(|id|library.skins.get(id).map(|s|&s.texture_id)).collect();
+        if !old_textures.is_subset(&new_textures){return Err("The permanent skin archive cannot be removed. Reload before saving.".into());}
+    }
+    for skin in library.skins.values(){if !get_textures_dir()?.join(format!("{}.png",skin.texture_id)).is_file(){return Err("A referenced skin texture is missing.".into());}}
     let temp_path = lib_path.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
     let json = serde_json::to_string(&library).map_err(|e| e.to_string())?;
 
@@ -106,30 +120,16 @@ pub fn save_skin_library(library: SkinLibrary) -> Result<(), String> {
     temp_file.sync_all().map_err(|e| e.to_string())?; // Ensure flushed to disk
     drop(temp_file);
 
-    // Robust replace to bypass Windows lock errors
-    if lib_path.exists() {
-        let backup_path = lib_path.with_extension("bak");
-        let _ = fs::remove_file(&backup_path);
-        if fs::rename(&lib_path, &backup_path).is_ok() {
-            if let Err(e) = fs::rename(&temp_path, &lib_path) {
-                let _ = fs::rename(&backup_path, &lib_path); // Restore on fail
-                return Err(e.to_string());
-            }
-            let _ = fs::remove_file(&backup_path);
-        } else {
-            // Fallback
-            fs::rename(&temp_path, &lib_path).map_err(|e| e.to_string())?;
-        }
-    } else {
-        fs::rename(&temp_path, &lib_path).map_err(|e| e.to_string())?;
-    }
-    
+    if lib_path.exists(){fs::copy(&lib_path,lib_path.with_extension("bak")).map_err(|e|e.to_string())?;}
+    if let Err(e)=fs::rename(&temp_path,&lib_path){let _=fs::remove_file(&temp_path);return Err(e.to_string());}
+
     Ok(())
 }
 
 #[tauri::command]
 pub fn process_and_save_texture(base64_data: String) -> Result<String, String> {
     let _guard = STORAGE.lock().map_err(|_| "Storage lock failed")?;
+    let _file_lock = storage_file_lock()?;
     if base64_data.len() > 1_400_000 { return Err("Texture input too large".into()); }
     let b64_clean = base64_data.split(',').last().unwrap_or(&base64_data);
     let bytes = BASE64.decode(b64_clean).map_err(|_| "Invalid base64 encoding")?;
@@ -170,9 +170,14 @@ pub fn read_skin_textures_batched(ids: Vec<String>) -> Result<HashMap<String, St
 }
 
 #[tauri::command]
-pub fn generate_uuid() -> String {
-    uuid::Uuid::new_v4().to_string()
+pub fn backup_legacy_skin_packs(data:String)->Result<(),String>{
+    if data.len()>20_000_000{return Err("Legacy skin backup is too large".into());}
+    let _guard=STORAGE.lock().map_err(|_|"Storage lock failed")?;let _file_lock=storage_file_lock()?;
+    let path=get_skins_dir()?.join("legacy-v1.json");
+    if !path.exists(){let value:serde_json::Value=serde_json::from_str(&data).map_err(|_|"Invalid legacy skin data")?;if !value.is_array(){return Err("Invalid legacy skin data".into());}fs::write(path,data).map_err(|e|e.to_string())?;}Ok(())
 }
+#[tauri::command]
+pub fn read_legacy_skin_packs()->Result<Option<String>,String>{let path=get_skins_dir()?.join("legacy-v1.json");if !path.exists(){return Ok(None);}if fs::metadata(&path).map_err(|e|e.to_string())?.len()>20_000_000{return Err("Legacy backup too large".into());}fs::read_to_string(path).map(Some).map_err(|e|e.to_string())}
 
 fn is_texture_id(id: &str) -> bool { id.len() == 64 && id.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) }
 fn validate_library(library: &SkinLibrary) -> Result<(), String> {
@@ -183,6 +188,9 @@ fn validate_library(library: &SkinLibrary) -> Result<(), String> {
     if !library.packs.iter().any(|p| p.id == "all-old-skins") { return Err("Missing All Old Skins".into()); }
     if !library.packs.iter().any(|p| p.id == "account-skins") { return Err("Missing Account Skins".into()); }
 
+    for (id,name) in [("all-old-skins","All Old Skins"),("account-skins","Account Skins")] {
+        if !library.packs.iter().any(|p|p.id==id&&p.name==name){return Err("System pack names cannot be changed".into());}
+    }
     let mut pack_ids = HashSet::new();
     for pack in &library.packs { if !pack_ids.insert(&pack.id) { return Err("Duplicate pack ID".into()); } }
     let mut defined_skins = HashSet::new();
