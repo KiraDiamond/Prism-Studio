@@ -1,0 +1,441 @@
+/* --- BASE TOKENS (Assumes existing Prism Studio tokens, defining fallbacks) --- */
+:root {
+    --bg-base: #0f0f13;
+    --bg-surface: #1a1a20;
+    --bg-surface-hover: #24242c;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0ab;
+    --text-muted: #6e6e77;
+
+    --accent-cyan: #00e5ff;
+    --accent-violet: #8a2be2;
+    --prism-gradient: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+}
+
+/* --- HEADER & TOOLBAR --- */
+.instances-header {
+    padding: 2rem 2rem 1rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.instances-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-titles h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.subtitle {
+    margin: 4px 0 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.instances-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.toolbar-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* Base Inputs */
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.search-box .icon-search {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+}
+.search-box input {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 8px 12px 8px 36px;
+    border-radius: 6px;
+    width: 240px;
+    outline: none;
+    transition: 0.2s;
+}
+.search-box input:focus {
+    border-color: var(--accent-cyan);
+}
+
+.combo-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+}
+
+/* View Switcher */
+.view-switcher {
+    display: flex;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 2px;
+}
+.view-switcher .icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: 0.2s;
+}
+.view-switcher .icon-btn:hover {
+    color: var(--text-primary);
+}
+.view-switcher .icon-btn.active {
+    background: var(--border-strong);
+    color: var(--accent-cyan);
+}
+
+/* Buttons */
+.btn-prism-accent {
+    background: var(--prism-gradient);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s, transform 0.1s;
+}
+.btn-prism-accent:hover {
+    filter: brightness(1.15);
+}
+.btn-prism-accent:active {
+    transform: scale(0.97);
+}
+
+.btn-overflow {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+.btn-overflow:hover {
+    background: var(--border-subtle);
+    color: var(--text-primary);
+}
+
+/* --- CONTAINER & EMPTY STATE --- */
+.instances-container {
+    padding: 0 2rem 2rem 2rem;
+    overflow-y: auto;
+    height: 100%;
+}
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 40vh;
+    color: var(--text-secondary);
+    text-align: center;
+}
+.empty-state h3 { color: var(--text-primary); margin-bottom: 8px; }
+
+/* =========================================
+   VIEW 1: VISUAL GRID 
+   ========================================= */
+.view-mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+}
+
+.instance-card-grid {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+.instance-card-grid:hover, .instance-card-grid:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--accent-violet);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    outline: none;
+}
+
+.card-art {
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* Dark gradient to ensure text readability if overlaid, or just depth */
+.card-art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5));
+    pointer-events: none;
+}
+
+.btn-play-hero {
+    z-index: 2;
+    background: var(--prism-gradient);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.instance-card-grid:hover .btn-play-hero, 
+.instance-card-grid:focus-within .btn-play-hero {
+    opacity: 1;
+    transform: scale(1);
+}
+.btn-play-hero:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+}
+
+.card-info {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.inst-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    image-rendering: pixelated;
+}
+.inst-details {
+    flex: 1;
+    min-width: 0; /* allows text truncation */
+}
+.inst-name {
+    margin: 0 0 2px 0;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.inst-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* =========================================
+   VIEW 2: COMPACT 
+   ========================================= */
+.view-mode-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.instance-row-compact {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 8px 12px;
+    height: 56px;
+    transition: 0.15s;
+    cursor: pointer;
+}
+.instance-row-compact:hover, .instance-row-compact:focus-visible {
+    background: var(--bg-surface);
+    border-color: var(--border-subtle);
+    outline: none;
+}
+/* Subtle Prism edge on hover for Compact */
+.instance-row-compact:hover {
+    box-shadow: inset 3px 0 0 var(--accent-cyan);
+}
+
+.inst-icon-small {
+    width: 28px;
+    height: 28px;
+    image-rendering: pixelated;
+    border-radius: 4px;
+}
+.inst-name-col {
+    flex: 1;
+    font-weight: 500;
+}
+.inst-badges {
+    display: flex;
+    gap: 8px;
+    min-width: 180px;
+}
+.badge {
+    background: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+}
+.instance-row-compact:hover .row-actions,
+.instance-row-compact:focus-within .row-actions {
+    opacity: 1;
+}
+
+.btn-play-small {
+    background: var(--border-strong);
+    color: var(--text-primary);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: 0.2s;
+}
+.btn-play-small:hover {
+    background: var(--prism-gradient);
+    color: white;
+}
+
+/* =========================================
+   VIEW 3: DETAILED LIST 
+   ========================================= */
+.view-mode-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.list-header, .instance-row-list {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 120px;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 1rem;
+}
+
+.list-header {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-strong);
+    margin-bottom: 8px;
+}
+
+.instance-row-list {
+    background: var(--bg-surface);
+    border: 1px solid transparent;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: 0.15s;
+    cursor: pointer;
+}
+.instance-row-list:hover, .instance-row-list:focus-visible {
+    background: var(--bg-surface-hover);
+    outline: none;
+}
+/* Row selection / hover accent */
+.instance-row-list:focus-visible {
+    border-color: var(--accent-violet);
+}
+
+.col-name {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+}
+.col-version, .col-loader, .col-played {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.col-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    opacity: 0;
+    transition: 0.2s;
+}
+.instance-row-list:hover .col-actions,
+.instance-row-list:focus-within .col-actions {
+    opacity: 1;
+}
+
+/* --- RESPONSIVE ADJUSTMENTS --- */
+@media (max-width: 1100px) {
+    /* Hide 'Last Played' in List view on medium screens */
+    .list-header, .instance-row-list {
+        grid-template-columns: 2fr 1fr 1fr 120px;
+    }
+    .col-played { display: none; }
+}
+
+@media (max-width: 800px) {
+    .instances-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-box input {
+        width: 100%;
+    }
+    /* Hide 'Loader' in List view on small screens */
+    .list-header, .instance-row-list {
+        grid-template-columns: 2fr 1fr 100px;
+    }
+    .col-loader { display: none; }
+
+    .inst-badges {
+        min-width: auto;
+    }
+    .badge-loader { display: none; }
+}

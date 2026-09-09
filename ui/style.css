@@ -529,3 +529,25 @@ select,select option{background:#1c232d;color:#e6edf8}
 @media(max-width:740px){#view-skins .skins-workspace{grid-template-columns:minmax(0,1fr)}#view-skins .skin-feature-panel{grid-column:1;grid-row:2;position:static;min-height:350px}#view-skins .pack-toolbar-actions{flex-wrap:wrap}#view-skins #skin-grid{max-height:50vh}}
 
 #view-skins .skin-feature-top{flex-direction:column} .skin-name-input{width:100%;min-width:0;background:#1c2027;border:1px solid #39424e;border-radius:5px;color:#edf1f6;font:inherit;font-size:17px;font-weight:600;padding:9px;margin-top:8px} .skin-name-input:focus{outline:2px solid #91dbf3} #view-skins .skin-feature-top>div{width:100%;min-width:0} #view-skins .skin-preview-character,#view-skins #skin-preview-character{width:100%;height:360px;transform:none} #view-skins .pack-preview-image{position:static;transform:none;width:100%;height:100%;max-height:360px;object-fit:contain} #view-skins .skin-preview-stage{min-height:380px;padding:12px} .pack-row-skins .skin-tile span{display:block;max-width:100%;min-width:0}
+
+/* Shared library layout preference. */
+.instance-layout-panel{grid-column:1/-1}.instance-layout-options{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+[data-instance-view].active{border-color:#68bdd4;background:#202e38;color:#e9faff}
+.instance-view-toolbar .toggle-btn{width:auto;padding:0 10px;font-size:11px}
+[data-instance-view]:focus-visible{outline:2px solid #91dbf3;outline-offset:2px}
+.card-last-played{display:none}
+.grid-container.compact-view{grid-template-columns:1fr;gap:4px}
+.compact-view .card{flex-direction:row;min-height:54px;border-radius:5px}
+.compact-view .card-banner{width:52px;height:54px;flex:0 0 52px}
+.compact-view .card-banner-icon{width:34px;height:34px}.compact-view .card-fav-btn{top:0;right:0;width:19px;height:19px}
+.compact-view .card-content{flex-direction:row;align-items:center;gap:12px;padding:6px 10px;min-width:0}
+.compact-view .card-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compact-view .card-meta{margin:0}.compact-view .card-playtime{display:none}.compact-view .card-actions{margin:0;flex-shrink:0}
+.instance-list-heading,.list-view .card-content{display:grid;grid-template-columns:minmax(150px,1.6fr) minmax(115px,1fr) minmax(95px,.8fr) 85px 150px;gap:12px;align-items:center}
+.instance-list-heading{padding:10px 14px 10px 70px;color:#8993a2;font-size:11px;border-bottom:1px solid #303640}
+.list-view{overflow-x:auto}.list-view .card,.instance-list-heading{min-width:730px}
+.list-view .card{min-height:68px}.list-view .card-banner{width:56px;flex:0 0 56px}.list-view .card-banner-icon{width:36px;height:36px}
+.list-view .card-content{padding:10px 14px;width:100%;min-width:0}.list-view .card-title{width:auto;min-width:0}
+.list-view .card-meta{flex-wrap:wrap}.list-view .card-last-played{display:block;color:#a0a9b5;font-size:11px}
+.list-view .card-playtime{margin:0;font-size:11px}.list-view .card-actions{width:150px}
+@media(max-width:850px){.compact-view .card-meta{display:none}.instance-view-toolbar{flex-wrap:wrap}}

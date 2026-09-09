@@ -1,0 +1,45 @@
+<!-- Instances View Header -->
+<div class="instances-header">
+    <div class="instances-header-top">
+        <div class="header-titles">
+            <h2>Instances</h2>
+            <p class="subtitle">Manage and launch your Minecraft installations</p>
+        </div>
+        <button class="btn-prism-accent" onclick="createNewInstance()">
+            + New Instance
+        </button>
+    </div>
+
+    <div class="instances-toolbar">
+        <div class="search-box">
+            <svg class="icon-search" viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="instance-search" placeholder="Search instances..." oninput="handleInstancesSearch(this.value)">
+        </div>
+
+        <div class="toolbar-controls">
+            <select id="instance-filter" onchange="handleInstancesFilter(this.value)" class="combo-box">
+                <option value="all">All Loaders</option>
+                <option value="vanilla">Vanilla</option>
+                <option value="fabric">Fabric</option>
+                <option value="forge">Forge</option>
+                <option value="neoforge">NeoForge</option>
+            </select>
+
+            <select id="instance-sort" onchange="handleInstancesSort(this.value)" class="combo-box">
+                <option value="recent">Recently Played</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="version">Minecraft Version</option>
+                <option value="created">Date Created</option>
+            </select>
+
+            <div class="view-switcher" role="radiogroup" aria-label="Instance Layout View">
+                <button class="icon-btn" data-view="grid" onclick="setInstanceView('grid')" title="Visual Grid" aria-checked="true" role="radio">▦</button>
+                <button class="icon-btn" data-view="compact" onclick="setInstanceView('compact')" title="Compact" aria-checked="false" role="radio">≡</button>
+                <button class="icon-btn" data-view="list" onclick="setInstanceView('list')" title="Detailed List" aria-checked="false" role="radio">☷</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dynamic Container for the Grid/Compact/List views -->
+<div id="instances-container" class="instances-container"></div>

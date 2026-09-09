@@ -104,14 +104,11 @@
                                 <option value="playtime">Most played</option>
                             </select>
                         </label>
-                        <div class="toggle-group" role="group" aria-label="View mode">
-                            <button id="btn-grid" class="toggle-btn active" aria-label="Grid View" aria-pressed="true">
-                                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"/></svg>
-                            </button>
-                            <button id="btn-list" class="toggle-btn" aria-label="List View" aria-pressed="false">
-                                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4 6h3v3H4V6Zm5 0h11v3H9V6Zm-5 6h3v3H4v-3Zm5 0h11v3H9v-3Zm-5 6h3v3H4v-3Zm5 0h11v3H9v-3Z"/></svg>
-                            </button>
-                        </div>
+                        <div class="toggle-group instance-view-toolbar" role="group" aria-label="Instance library layout">
+<button id="btn-grid" type="button" class="toggle-btn" data-instance-view="grid" aria-pressed="true">Visual Grid</button>
+<button id="btn-compact" type="button" class="toggle-btn" data-instance-view="compact" aria-pressed="false">Compact</button>
+<button id="btn-list" type="button" class="toggle-btn" data-instance-view="list" aria-pressed="false">Detailed List</button>
+</div>
                     </div>
                 </div>
 
@@ -249,6 +246,13 @@
                 </header>
 
                 <div class="settings-grid">
+<section class="settings-panel instance-layout-panel">
+<div class="section-kicker">Instance Library</div><h3>Layout</h3><p>Choose how your Minecraft instances are displayed.</p>
+<div class="instance-layout-options" role="group" aria-label="Instance library layout">
+<button type="button" class="btn btn-secondary" data-instance-view="grid" aria-pressed="true">Visual Grid</button>
+<button type="button" class="btn btn-secondary" data-instance-view="compact" aria-pressed="false">Compact</button>
+<button type="button" class="btn btn-secondary" data-instance-view="list" aria-pressed="false">Detailed List</button>
+</div></section>
                     <section class="settings-panel">
                         <div class="section-kicker">PRISM CONNECTION</div>
                         <h3>Launcher paths</h3>

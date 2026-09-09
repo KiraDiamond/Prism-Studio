@@ -61,7 +61,7 @@ const state = {
     accounts: [],
     settings: {},
     profile: localStorage.getItem('selected_profile') || '',
-    viewMode: localStorage.getItem('view_mode') || 'grid',
+    viewMode: 'grid',
     sortMode: localStorage.getItem('sort_mode') || 'recent',
     favorites: new Set(loadJsonPreference('favorites', [])),
     servers: loadJsonPreference('servers', {}),
@@ -168,6 +168,7 @@ const els = {
 
 async function init() {
     setupUIEvents();
+    await loadInstanceLibraryView();
     applyStoredPreferences();
     ensureActiveSkinPack();
 
@@ -188,18 +189,38 @@ async function init() {
 
 function applyStoredPreferences() {
     if (!['recent', 'az', 'playtime'].includes(state.sortMode)) state.sortMode = 'recent';
-    if (!['grid', 'list'].includes(state.viewMode)) state.viewMode = 'grid';
+    if (!['grid', 'compact', 'list'].includes(state.viewMode)) state.viewMode = 'grid';
     els.sortSelect.value = state.sortMode;
     updateViewModeClass();
 }
 
-function updateViewModeClass() {
-    const isList = state.viewMode === 'list';
-    els.grid.classList.toggle('list-view', isList);
-    els.btnList.classList.toggle('active', isList);
-    els.btnGrid.classList.toggle('active', !isList);
-    els.btnList.setAttribute('aria-pressed', String(isList));
-    els.btnGrid.setAttribute('aria-pressed', String(!isList));
+let instanceViewSave=Promise.resolve();
+function getInstanceLibraryView(){return state.viewMode;}
+async function loadInstanceLibraryView(){
+    try{
+        const saved=await invoke('get_instance_library_view');
+        if(saved===null){
+            const old=localStorage.getItem('view_mode');
+            await setInstanceLibraryView(['grid','compact','list'].includes(old)?old:'grid');
+            localStorage.removeItem('view_mode');
+        }else{state.viewMode=['grid','compact','list'].includes(saved)?saved:'grid';updateViewModeClass();}
+    }catch(error){showToast('Could not load layout: '+String(error),'error');}
+}
+function setInstanceLibraryView(view){
+    if(!['grid','compact','list'].includes(view))return Promise.reject(new Error('Invalid instance layout'));
+    state.viewMode=view;updateViewModeClass();
+    if(state.library)renderLibrary();
+    instanceViewSave=instanceViewSave.catch(()=>{}).then(()=>invoke('set_instance_library_view',{view}));
+    instanceViewSave.catch(error=>showToast('Could not save layout: '+String(error),'error'));
+    return instanceViewSave;
+}
+function updateViewModeClass(){
+    els.grid.classList.toggle('list-view',state.viewMode==='list');
+    els.grid.classList.toggle('compact-view',state.viewMode==='compact');
+    document.querySelectorAll('[data-instance-view]').forEach(button=>{
+        const selected=button.dataset.instanceView===state.viewMode;
+        button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));
+    });
 }
 
 async function fetchLibrary(isRefresh = false) {
@@ -367,6 +388,9 @@ function renderLibrary() {
     }
 
     const fragment = document.createDocumentFragment();
+    if(state.viewMode==='list'){
+        const header=document.createElement('div');header.className='instance-list-heading';header.innerHTML='<span>Instance</span><span>Version / Loader</span><span>Last played</span><span>Playtime</span><span>Actions</span>';fragment.append(header);
+    }
     for (const instance of filtered) fragment.appendChild(createInstanceCard(instance));
     els.grid.appendChild(fragment);
     renderHero();
@@ -395,6 +419,7 @@ function createInstanceCard(instance) {
                 <span class="badge">${escapeHTML(instance.version || 'Unknown')}</span>
                 <span class="badge">${escapeHTML(instance.loader || 'Vanilla')}</span>
             </div>
+            <div class="card-last-played">${escapeHTML(formatDate(instance.lastLaunch))}</div>
             <div class="card-playtime">${formatPlaytime(instance.playtime)} played</div>
             <div class="card-actions">
                 <button class="btn card-play-btn" data-action="play" ${isLaunching ? 'disabled' : ''}>${isLaunching ? 'Launching…' : 'Play'}</button>
@@ -1034,8 +1059,7 @@ function setupUIEvents() {
 
     els.searchInput.addEventListener('input',event=>{ state.searchQuery=event.target.value; renderLibrary(); });
 
-    els.btnGrid.addEventListener('click',()=>{ state.viewMode='grid'; localStorage.setItem('view_mode',state.viewMode); updateViewModeClass(); });
-    els.btnList.addEventListener('click',()=>{ state.viewMode='list'; localStorage.setItem('view_mode',state.viewMode); updateViewModeClass(); });
+    document.querySelectorAll('[data-instance-view]').forEach(button=>button.addEventListener('click',()=>{setInstanceLibraryView(button.dataset.instanceView).catch(()=>{});}));
     els.sortSelect.addEventListener('change',event=>{ state.sortMode=event.target.value; localStorage.setItem('sort_mode',state.sortMode); renderLibrary(); });
 
     els.grid.addEventListener('click',event=>{
