@@ -2,5 +2,6 @@ node_modules/
 *.log
 src-tauri/target/
 /Prism Studio.exe
+/Prism Studio Preview.exe
 /preview.png
 src-tauri/gen/

@@ -1,0 +1,17 @@
+Prism Studio UI installation
+
+Copy these three files into the repository's ui/ directory:
+
+ui/
+  index.html
+  style.css
+  app.js
+
+Replace the existing files with these versions.
+
+Do not change src-tauri/ for this frontend update.
+
+Recommended before replacing:
+1. Make a commit or backup of the current ui/ directory.
+2. Replace ui/index.html, ui/style.css, and ui/app.js.
+3. Build/run Prism Studio normally through the existing Tauri project.

@@ -1,26 +1,354 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Prism Studio</title><link rel="icon" href="mark.svg"><link rel="stylesheet" href="style.css"><script type="module" src="app.js"></script></head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prism Studio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
- <aside class="sidebar">
-  <a class="brand" href="#library"><img src="mark.svg" alt=""><span>prism<span class="brand-sub">STUDIO</span></span></a>
-  <div class="nav-caption">YOUR SPACE</div>
-  <nav aria-label="Main navigation"><button class="nav active" data-page="library"><span>▦</span> Library <b id="library-count">—</b></button><button class="nav" data-page="favorites"><span>☆</span> Favourites <b id="favorite-count">0</b></button><button class="nav" data-page="accounts"><span>♙</span> Accounts</button></nav>
-  <div class="sidebar-bottom"><div class="engine"><span class="status-dot"></span><div>Powered by Prism<small>Your instances. Your rules.</small></div></div><button class="nav" data-page="settings"><span>⚙</span> Connection</button><div class="version">PRISM STUDIO <span>0.1.0</span></div></div>
- </aside>
- <main>
-  <header class="topbar"><div class="breadcrumb">Your space <span>/</span> <strong id="crumb">Library</strong></div><button id="refresh" class="quiet" aria-label="Refresh Prism library">↻ <span>Refresh</span></button><div class="profile-chip"><span class="avatar" id="avatar">P</span><div><label for="profile">PLAYING AS</label><select id="profile" aria-label="Minecraft account"><option>Loading accounts…</option></select></div></div></header>
-  <div id="notice" role="status" aria-live="polite" hidden></div>
-  <section id="library-page" class="page">
-   <div class="page-heading"><div><p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Your next adventure.</h1><p class="muted">All your worlds, one familiar place.</p></div><button id="manage" class="secondary">＋ Manage in Prism <span>↗</span></button></div>
-   <section class="hero" id="hero" aria-label="Continue playing" hidden><div class="hero-art" aria-hidden="true"><div class="sun"></div><div class="mountain back"></div><div class="mountain front"></div><div class="terrain"></div><div class="crosshair">✧</div></div><div class="hero-content"><p class="eyebrow"><span class="status-dot"></span> JUMP BACK IN</p><h2 id="hero-name"></h2><p id="hero-meta"></p><div class="hero-actions"><button class="primary" id="hero-play">▶ Launch game</button><button class="hero-detail" id="hero-details">View instance <span>→</span></button></div></div><span class="hero-tag">YOUR LIBRARY, REIMAGINED</span></section>
-   <div class="library-heading"><div><h2 id="list-heading">Your instances <span id="result-count"></span></h2></div><div class="view-controls"><button id="grid-view" class="view active" aria-label="Grid view" aria-pressed="true">▦</button><button id="list-view" class="view" aria-label="List view" aria-pressed="false">☰</button></div></div>
-   <div class="toolbar"><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Find your next world…" aria-label="Search instances"><kbd>/</kbd></label><select id="loader-filter" aria-label="Filter by mod loader"><option value="">All loaders</option></select><select id="sort" aria-label="Sort instances"><option value="recent">Recently played</option><option value="name">Name A–Z</option><option value="playtime">Most played</option></select></div>
-   <div id="instances" class="cards" aria-live="polite"><div class="empty">Connecting to your Prism library…</div></div>
-   <footer><span>LOCAL LIBRARY <span class="footer-dot">•</span> <span id="footer-count">Connecting</span></span><span>Made for the way you play.</span></footer>
-  </section>
-  <section id="accounts-page" class="page" hidden><p class="eyebrow">PICK YOUR PLAYER</p><h1>Your accounts.</h1><p class="muted">Choose the account used for your next launch.</p><div id="accounts" class="account-grid"></div><div class="info-panel"><h2>Managed securely by Prism</h2><p>Sign-in, token refresh and adding accounts stay in Prism. Studio reads your profile names and sends your selection when launching.</p><button class="secondary" id="manage-accounts">Manage accounts in Prism ↗</button></div></section>
-  <section id="settings-page" class="page" hidden><p class="eyebrow">CONNECTED TO YOUR LIBRARY</p><h1>Connection.</h1><p class="muted">Use your existing Prism installation. Your worlds stay where they are.</p><form id="connection" class="settings-panel"><label for="root">Prism data folder</label><input id="root" required placeholder="C:\Users\you\AppData\Roaming\PrismLauncher"><p class="field-help">The folder containing prismlauncher.cfg and accounts.json.</p><label for="executable">Prism executable</label><input id="executable" required placeholder="C:\…\prismlauncher.exe"><button class="primary" type="submit">Save & reconnect</button></form><div class="info-panel"><h2>One library. Two interfaces.</h2><p>Studio provides your library, favourites, account selection and launch controls. Advanced editing, installing packs and sign-in open in Prism. A launch request is a handoff: Prism may show progress or errors in its own window.</p><p>Your new interface runs separately, but a problem inside Prism can still prevent Minecraft from launching.</p></div></section>
- </main>
- <dialog id="details"><div class="dialog-header"><span class="eyebrow">INSTANCE DETAILS</span><button class="quiet" id="close-details" aria-label="Close instance details">✕</button></div><div class="details-title"><div id="detail-icon"></div><div><h2 id="detail-name"></h2><p class="muted" id="detail-meta"></p></div></div><div class="detail-stats"><div><small>TIME PLAYED</small><strong id="detail-time"></strong></div><div><small>LAST PLAYED</small><strong id="detail-last"></strong></div></div><label class="server-label" for="server">Join a server <span>optional</span></label><input id="server" placeholder="play.wynncraft.com" maxlength="253"><div class="detail-actions"><button class="primary" id="detail-play">▶ Launch game</button><button class="secondary" id="edit-instance">Edit in Prism ↗</button><button class="secondary" id="open-folder">Open folder</button></div><div class="mods-heading"><h3>Installed mods <span id="mods-count"></span></h3><input id="mod-search" type="search" placeholder="Filter mods" aria-label="Filter installed mods"></div><div id="mods" class="mods"></div></dialog>
-</body></html>
+    <div id="app-layout">
+        <div id="toast-container" aria-live="polite"></div>
+
+        <nav id="sidebar" aria-label="Primary navigation">
+            <div class="brand">
+                <svg class="prism-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <polygon points="50,14 89,84 11,84" fill="none" stroke="currentColor" stroke-width="4"/>
+                    <line x1="0" y1="60" x2="35" y2="50" stroke="currentColor" stroke-width="3"/>
+                    <line x1="65" y1="50" x2="100" y2="38" class="ray ray-cyan" stroke-width="2.5"/>
+                    <line x1="65" y1="50" x2="100" y2="52" class="ray ray-violet" stroke-width="2.5"/>
+                    <line x1="65" y1="50" x2="98" y2="66" class="ray ray-amber" stroke-width="2"/>
+                </svg>
+                <div class="brand-text">
+                    <h1>Prism Studio</h1>
+                    <span>Play Different</span>
+                </div>
+            </div>
+
+            <ul class="nav-links">
+                <li><button class="nav-item active" data-view="library">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13Zm2 .5v12h12V6H6Zm2 2h8v3H8V8Zm0 5h5v3H8v-3Z"/></svg>
+                    <span>Library</span>
+                </button></li>
+                <li><button class="nav-item" data-view="favourites">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="m12 3 2.67 5.41 5.97.87-4.32 4.21 1.02 5.95L12 16.63l-5.34 2.81 1.02-5.95-4.32-4.21 5.97-.87L12 3Z"/></svg>
+                    <span>Favourites</span>
+                </button></li>
+                <li><button class="nav-item" data-view="accounts">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z"/></svg>
+                    <span>Accounts</span>
+                </button></li>
+                <li><button class="nav-item" data-view="skins">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8.5 3 12 5l3.5-2L20 6v4l-2 1v10H6V11l-2-1V6l4.5-3ZM8 7.18 6 8v.76l2 1V19h8v-9.24l2-1V8l-2-.82L12 9 8 7.18Z"/></svg>
+                    <span>Skins</span>
+                </button></li>
+                <li><button class="nav-item" data-view="settings">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M10.33 2h3.34l.62 2.18c.48.2.94.46 1.36.76l2.18-.62 1.67 2.89-1.56 1.63c.06.38.09.77.09 1.16s-.03.78-.09 1.16l1.56 1.63-1.67 2.89-2.18-.62c-.42.3-.88.56-1.36.76L13.67 18h-3.34l-.62-2.18a7.36 7.36 0 0 1-1.36-.76l-2.18.62-1.67-2.89 1.56-1.63A7.4 7.4 0 0 1 6 10c0-.39.03-.78.09-1.16L4.53 7.21 6.2 4.32l2.18.62c.42-.3.88-.56 1.36-.76L10.33 2ZM12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+                    <span>Settings</span>
+                </button></li>
+            </ul>
+
+            <div class="sidebar-bottom">
+                <div class="status-panel" id="launcher-status">
+                    <div class="status-indicator"></div>
+                    <div class="status-text">
+                        <strong id="status-main">Connecting...</strong>
+                        <span id="status-sub">Checking Prism Launcher</span>
+                    </div>
+                </div>
+                <div class="sidebar-version">PRISM STUDIO 0.1.0</div>
+            </div>
+        </nav>
+
+        <main id="main-content">
+            <!-- LIBRARY -->
+            <div id="view-library" class="view active">
+                <header class="top-header">
+                    <div class="header-titles">
+                        <div class="eyebrow">YOUR SPACE</div>
+                        <h2>Library</h2>
+                        <span>Manage and play your Minecraft instances</span>
+                    </div>
+                    <div class="header-controls">
+                        <button id="btn-refresh-library" class="btn btn-secondary icon-btn" aria-label="Refresh Library" title="Refresh Library">
+                            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 16.22 7.78L13 11h7V4l-2.35 2.35Z"/></svg>
+                        </button>
+                        <div class="account-selector">
+                            <span id="header-account-avatar" class="mini-avatar">?</span>
+                            <select id="header-account-select" aria-label="Select Minecraft Account">
+                                <option value="">Select Account...</option>
+                            </select>
+                        </div>
+                        <div class="search-container">
+                            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M10.5 4a6.5 6.5 0 1 0 3.95 11.66L19.8 21 21 19.8l-5.34-5.35A6.5 6.5 0 0 0 10.5 4Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z"/></svg>
+                            <input type="text" id="search-input" placeholder="Search library…">
+                            <kbd>/</kbd>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="filter-row"><div class="filter-chips" id="filter-container"></div></div>
+                <section class="hero-section" id="hero-section" aria-label="Continue playing"></section>
+
+                <div class="library-section-header">
+                    <div>
+                        <div class="section-kicker">YOUR COLLECTION</div>
+                        <h3>Your library <span id="library-count" class="section-count">0</span></h3>
+                    </div>
+                    <div class="view-controls">
+                        <label class="sort-wrap">
+                            <span>Sort by</span>
+                            <select id="sort-select" class="sort-select">
+                                <option value="recent">Last played</option>
+                                <option value="az">Name A–Z</option>
+                                <option value="playtime">Most played</option>
+                            </select>
+                        </label>
+                        <div class="toggle-group" role="group" aria-label="View mode">
+                            <button id="btn-grid" class="toggle-btn active" aria-label="Grid View" aria-pressed="true">
+                                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"/></svg>
+                            </button>
+                            <button id="btn-list" class="toggle-btn" aria-label="List View" aria-pressed="false">
+                                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4 6h3v3H4V6Zm5 0h11v3H9V6Zm-5 6h3v3H4v-3Zm5 0h11v3H9v-3Zm-5 6h3v3H4v-3Zm5 0h11v3H9v-3Z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-container" id="library-grid"></div>
+            </div>
+
+            <!-- ACCOUNTS -->
+            <div id="view-accounts" class="view account-view">
+                <header class="top-header account-header">
+                    <div class="header-titles">
+                        <div class="eyebrow">PLAYER PROFILES</div>
+                        <h2>Accounts</h2>
+                        <span>Choose who you're playing as</span>
+                    </div>
+                    <button id="btn-open-prism-accounts" class="btn btn-secondary">Manage in Prism</button>
+                </header>
+
+                <section class="character-select-shell">
+                    <div class="character-stage-backdrop"></div>
+                    <div class="character-stage-particles"></div>
+
+                    <button id="account-prev" class="carousel-arrow carousel-arrow-left" aria-label="Previous account">
+                        <svg viewBox="0 0 24 24" width="25" height="25"><path fill="currentColor" d="m15.5 5-7 7 7 7 1.5-1.5-5.5-5.5L17 6.5 15.5 5Z"/></svg>
+                    </button>
+
+                    <div id="account-carousel" class="account-carousel" aria-live="polite"></div>
+
+                    <button id="account-next" class="carousel-arrow carousel-arrow-right" aria-label="Next account">
+                        <svg viewBox="0 0 24 24" width="25" height="25"><path fill="currentColor" d="m8.5 5-1.5 1.5 5.5 5.5L7 17.5 8.5 19l7-7-7-7Z"/></svg>
+                    </button>
+
+                    <div class="character-platform-wrap">
+                        <div class="character-platform-glow"></div>
+                        <div class="character-platform"></div>
+                    </div>
+
+                    <div id="account-nameplate" class="account-nameplate"></div>
+
+                    <div id="account-roster" class="account-roster" aria-label="Account roster"></div>
+                </section>
+
+                <div class="privacy-note account-privacy">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5.05 3.41 9.76 8 11 4.59-1.24 8-5.95 8-11V5l-8-3Zm0 2.18L18 6.4V11c0 3.91-2.5 7.72-6 8.93C8.5 18.72 6 14.91 6 11V6.4l6-2.22Z"/></svg>
+                    <span>Credentials never enter the Studio frontend.</span>
+                </div>
+            </div>
+
+            <!-- SKINS -->
+            <div id="view-skins" class="view">
+                <header class="top-header skins-header">
+                    <div class="header-titles">
+                        <div class="eyebrow">SKIN PACKS</div>
+                        <h2>Skins</h2>
+                        <span>Organize old skins into packs and share them</span>
+                    </div>
+                    <div class="skin-header-actions">
+                        <button id="btn-import-skin-pack" class="btn btn-secondary">Import Shared Pack</button>
+                        <input id="skin-pack-file-input" type="file" accept=".json,application/json" hidden>
+                    </div>
+                </header>
+
+                <div class="pack-toolbar">
+                    <div id="skin-pack-tabs" class="pack-tabs"></div>
+                    <div class="pack-toolbar-actions">
+                        <button id="btn-add-skin-file" class="btn btn-primary" type="button">+ Add skin</button>
+                        <input id="skin-file-input" type="file" accept="image/png,.png" multiple hidden>
+                        <button id="btn-create-skin-pack" class="btn btn-primary" type="button">+ New pack</button>
+                        <button id="btn-share-skin-pack" class="btn btn-secondary">Share Pack</button>
+                        <button id="btn-delete-skin-pack" class="btn btn-secondary danger-soft">Delete Pack</button>
+                    </div>
+                </div>
+
+                <div class="skins-workspace">
+                    <section class="skin-feature-panel">
+                        <div class="skin-feature-top">
+                            <div>
+                                <div class="section-kicker">SELECTED SKIN</div>
+                                <h3 id="selected-skin-name">No skin selected</h3>
+                            </div>
+                            <span id="selected-skin-pack-label" class="muted-badge">All Old Skins</span>
+                        </div>
+
+                        <div class="skin-preview-stage">
+                            <div class="skin-preview-aura"></div>
+                            <div id="skin-preview-character" class="voxel-character voxel-character-large">
+                                <div class="voxel-head"></div>
+                                <div class="voxel-body"></div>
+                                <div class="voxel-arm voxel-arm-left"></div>
+                                <div class="voxel-arm voxel-arm-right"></div>
+                                <div class="voxel-leg voxel-leg-left"></div>
+                                <div class="voxel-leg voxel-leg-right"></div>
+                            </div>
+                            <div class="skin-preview-platform"></div>
+                        </div>
+
+                        <div class="skin-feature-actions">
+                            <button class="btn btn-primary" disabled title="Requires backend skin support">Apply Skin</button>
+                            <button id="btn-add-skin-to-pack" class="btn btn-secondary">Add to Pack</button>
+                        </div>
+
+                        <p class="skin-backend-note">Pack creation/import/share works locally. Applying a Minecraft skin still needs backend support.</p>
+                    </section>
+
+                    <section class="skin-pack-browser">
+                        <div class="skin-pack-browser-header">
+                            <div>
+                                <div class="section-kicker">ACTIVE PACK</div>
+                                <h3 id="active-pack-title">All Old Skins</h3>
+                            </div>
+                            <span id="active-pack-count" class="skin-count-label">0 skins</span>
+                        </div>
+
+                        <div id="skin-grid" class="skin-grid"></div>
+
+                        <div id="skin-pack-empty" class="skin-pack-empty hidden">
+                            <div class="skin-pack-empty-icon">
+                                <svg viewBox="0 0 24 24" width="25" height="25"><path fill="currentColor" d="M8.5 3 12 5l3.5-2L20 6v4l-2 1v10H6V11l-2-1V6l4.5-3ZM8 7.18 6 8v.76l2 1V19h8v-9.24l2-1V8l-2-.82L12 9 8 7.18Z"/></svg>
+                            </div>
+                            <strong>No skins in this pack yet</strong>
+                            <span>No skins in this pack.</span>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="view-settings" class="view">
+                <header class="top-header page-only-header">
+                    <div class="header-titles">
+                        <div class="eyebrow">STUDIO SETTINGS</div>
+                        <h2>Settings</h2>
+                        <span>Connection and launcher configuration</span>
+                    </div>
+                </header>
+
+                <div class="settings-grid">
+                    <section class="settings-panel">
+                        <div class="section-kicker">PRISM CONNECTION</div>
+                        <h3>Launcher paths</h3>
+                        <p>Studio reads your existing Prism Launcher library. It does not rewrite Prism's instance or account configuration.</p>
+
+                        <div class="form-group">
+                            <label for="setting-executable">Prism executable</label>
+                            <input type="text" id="setting-executable" placeholder="C:\Program Files\PrismLauncher\prismlauncher.exe">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="setting-root">Prism data folder</label>
+                            <input type="text" id="setting-root" placeholder="C:\Users\You\AppData\Roaming\PrismLauncher">
+                        </div>
+
+                        <button id="btn-save-connection" class="btn btn-primary">Save & reconnect</button>
+                    </section>
+
+                    <aside class="settings-side-panel">
+                        <div class="section-kicker">HOW IT WORKS</div>
+                        <h3>Studio on top. Prism underneath.</h3>
+                        <p>Use Studio for your everyday library, quick launch, favourites, accounts, server joining and mod visibility.</p>
+                        <p>Use Prism for authentication, downloads, Java, installation and advanced editing.</p>
+                    </aside>
+                </div>
+            </div>
+        </main>
+
+        <!-- INSTANCE INSPECTOR -->
+        <aside id="inspector" class="inspector hidden" aria-label="Instance details">
+            <button class="close-inspector" id="btn-close-inspector" aria-label="Close details">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z"/></svg>
+            </button>
+            <div class="inspector-banner">
+                <div class="insp-banner-bg" id="insp-banner-bg"></div>
+                <div class="insp-banner-vignette"></div>
+                <img class="insp-banner-icon" id="insp-banner-icon" src="" alt="">
+            </div>
+            <div class="inspector-content">
+                <div class="insp-header">
+                    <div>
+                        <span class="section-kicker">INSTANCE</span>
+                        <h3 id="insp-name">Instance Name</h3>
+                    </div>
+                    <button class="fav-btn" id="insp-fav" aria-label="Toggle Favourite" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="m12 3 2.67 5.41 5.97.87-4.32 4.21 1.02 5.95L12 16.63l-5.34 2.81 1.02-5.95-4.32-4.21 5.97-.87L12 3Z"/></svg>
+                    </button>
+                </div>
+
+                <div class="insp-meta">
+                    <span class="badge" id="insp-version">—</span>
+                    <span class="badge" id="insp-loader">Vanilla</span>
+                </div>
+
+                <div class="insp-stats">
+                    <div class="stat"><span class="stat-label">Played</span><span class="stat-value" id="insp-playtime">0h</span></div>
+                    <div class="stat"><span class="stat-label">Last played</span><span class="stat-value" id="insp-lastplayed">Never</span></div>
+                </div>
+
+                <section class="inspector-section">
+                    <div class="inspector-section-title">PLAY</div>
+                    <div class="server-field"><input type="text" id="insp-server" placeholder="Join server directly (optional)"></div>
+                    <button id="insp-btn-play" class="btn btn-prism btn-large inspector-play">Play</button>
+                </section>
+
+                <section class="inspector-section">
+                    <div class="inspector-section-title">QUICK ACTIONS</div>
+                    <div class="action-row">
+                        <button id="insp-btn-edit" class="btn btn-secondary">Edit in Prism</button>
+                        <button id="insp-btn-folder" class="btn btn-secondary">Open folder</button>
+                    </div>
+                </section>
+
+                <section class="inspector-section insp-mods">
+                    <div class="mods-header">
+                        <div>
+                            <div class="inspector-section-title">INSTALLED MODS</div>
+                            <span class="mods-count"><span id="insp-mod-count">0</span> total</span>
+                        </div>
+                        <input type="text" id="insp-mod-search" class="mod-search" placeholder="Filter…">
+                    </div>
+                    <div class="mod-list" id="insp-mod-list"></div>
+                </section>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Create pack modal -->
+    <dialog id="create-pack-dialog" class="studio-dialog">
+        <form method="dialog" id="create-pack-form">
+            <div class="dialog-eyebrow">NEW SKIN PACK</div>
+            <h3>Create a skin pack</h3>
+            <p>Give the pack a name. It will be stored locally and can be shared later.</p>
+            <input id="new-pack-name" type="text" maxlength="40" placeholder="Pack name" autocomplete="off">
+            <div class="dialog-actions">
+                <button value="cancel" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-create-pack" value="default" class="btn btn-primary">Create Pack</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="app.js"></script>
+</body>
+</html>

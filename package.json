@@ -1,1 +1,19 @@
-{"name":"prism-studio","version":"0.1.0","private":true,"type":"module","scripts":{"tauri":"tauri","dev":"tauri dev","build":"tauri build --no-bundle"},"devDependencies":{"@tauri-apps/cli":"^2"}}
+{
+  "name": "prism-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "npm run build:ui && tauri build --no-bundle",
+    "build:ui": "esbuild skinview-entry.js --bundle --format=esm --minify --outfile=ui/skinview.bundle.js"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "skinview3d": "^3.4.2"
+  }
+}

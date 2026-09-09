@@ -9,3 +9,5 @@
 - No browser console errors observed during the desktop flow.
 - No horizontal layout overflow at widths 640, 768, 1024, and 1440 pixels.
 - Tests used isolated Studio settings and browser storage. Prism instance/account files were read, not modified.
+
+Final release rechecked: 26 instances, 8 locally rendered cached skins, account arrows, skin grid, search, inspector, settings and Rust launch handoff with server. No console errors. Applying a new Minecraft skin is not implemented.

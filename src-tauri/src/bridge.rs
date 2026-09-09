@@ -23,7 +23,19 @@ pub struct Instance {
     pub icon: Option<String>, pub last_launch: u64, pub playtime: u64, pub group: String,
 }
 #[derive(Serialize, Clone)]
-pub struct Account { pub name: String, pub active: bool }
+pub struct Account { pub name: String, pub active: bool, pub skin: Option<String>, pub model: String }
+
+fn account_preview(account: &Value) -> Option<Account> {
+    let skin = account["profile"]["skin"]["data"].as_str().filter(|data| data.len() <= 200_000)
+        .and_then(|data| STANDARD.decode(data).ok())
+        .filter(|bytes| bytes.starts_with(b"\x89PNG\r\n\x1a\n"))
+        .map(|bytes| format!("data:image/png;base64,{}", STANDARD.encode(bytes)));
+    Some(Account {
+        name: account["profile"]["name"].as_str()?.into(),
+        active: account["active"].as_bool().unwrap_or(false), skin,
+        model: if account["profile"]["skin"]["variant"] == "SLIM" {"slim"} else {"default"}.into(),
+    })
+}
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Library {
@@ -109,7 +121,7 @@ pub fn read_library(settings: Settings) -> Result<Library, String> {
     }
     instances.sort_by(|a,b|b.last_launch.cmp(&a.last_launch));
     let accounts = match json_file(&root.join("accounts.json")) {
-        Ok(data)=>data["accounts"].as_array().map(|a|a.iter().filter_map(|a|Some(Account{name:a["profile"]["name"].as_str()?.into(),active:a["active"].as_bool().unwrap_or(false)})).collect()).unwrap_or_default(),
+        Ok(data)=>data["accounts"].as_array().map(|a|a.iter().filter_map(account_preview).collect()).unwrap_or_default(),
         Err(_)=>{warnings.push("Accounts could not be read. Sign in using Prism, then refresh.".into());Vec::new()}
     };
     let executable_found = Path::new(&settings.executable).is_file();
@@ -155,6 +167,16 @@ pub fn read_mods(settings: &Settings, id: &str) -> Result<Vec<Mod>,String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test] fn account_skin_preview_is_local_and_validated() {
+        let mut value = serde_json::json!({"profile":{"name":"Player","skin":{"data":STANDARD.encode(b"\x89PNG\r\n\x1a\nexample"),"variant":"SLIM","url":"https://example.invalid"}},"msa":{"token":"SECRET"}});
+        let preview=account_preview(&value).unwrap();
+        assert_eq!(preview.model,"slim");
+        assert!(preview.skin.unwrap().starts_with("data:image/png;base64,"));
+        value["profile"]["skin"]["data"]=Value::String("not a png".into());
+        assert!(account_preview(&value).unwrap().skin.is_none());
+        let serialized=serde_json::to_string(&account_preview(&value)).unwrap();
+        assert!(!serialized.contains("SECRET"));assert!(!serialized.contains("example.invalid"));
+    }
     #[test] fn ini_preserves_values() {
         let cfg=parse_ini("[General]\nname=Hello=world\nnotes=one\\ntwo\nroot=C:\\Games\\Prism");
         assert_eq!(cfg["name"],"Hello=world");assert_eq!(cfg["notes"],"one\ntwo");assert_eq!(cfg["root"],"C:\\Games\\Prism");

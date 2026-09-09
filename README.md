@@ -22,7 +22,9 @@ This is an independent frontend, not an embedded fork of Prism's C++ core. Launc
 
 Prism still handles authentication, downloads, Java, modloaders, installing packs, and advanced instance editing. Those operations may display Prism windows. A successful launch handoff means the Prism process started; it does not prove that Minecraft finished launching. Studio cannot eliminate a failure or hang inside Prism. The interface remains independent of that process.
 
-Account credentials are never sent to the frontend. Only profile names and the active flag are returned. Studio reads Prism files and doesn't rewrite its instance or account configuration. Favourites, UI choices and server addresses are stored in Studio's WebView storage; connection settings are in `%APPDATA%\PrismStudio\connection.json`.
+Account credentials are never sent to the frontend. Only profile names, the active flag, model type and cached PNG skin textures are returned. Studio reads Prism files and doesn't rewrite its instance or account configuration. Favourites, UI choices and server addresses are stored in Studio's WebView storage; connection settings are in `%APPDATA%\PrismStudio\connection.json`.
+
+The account carousel renders the actual cached skins locally using skinview3d. Arrows select the next/previous account. The skin grid includes these account skins; applying a different Minecraft skin is not implemented. No remote skin API is needed. NMSR was reviewed as an alternative but is not integrated in this build.
 
 ## Build from source
 
