@@ -55,3 +55,5 @@ Updated production installer build passed. Actual release desktop checks passed:
 ## Version 0.1.1 — dialogs and updates
 
 All three dialogs passed centering checks at 640, 1280 and 1920 pixels in the actual release executable. Ten Rust tests and static checks passed. The optimized executable and NSIS installer built successfully. Settings now includes Check for updates, and the standalone updater supports older EXE installations. The updater preserves data and a previous-EXE backup, validates release metadata and SHA-256, and refuses unverified downloads.
+
+Public-release updater verification passed: downloaded the actual GitHub release without authentication, verified its digest and executable metadata, upgraded an isolated copy from 0.1.0 to 0.1.1, retained the previous EXE backup, and reported up to date on the second run. The repository was made public with owner approval.

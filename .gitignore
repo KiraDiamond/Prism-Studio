@@ -21,3 +21,6 @@ LOCAL_AGENT_HANDOFF.md
 *Local Agent.cmd
 /release/
 /diagnostics/
+
+/Update-Prism-Studio.cmd
+/Update-Prism-Studio.ps1
