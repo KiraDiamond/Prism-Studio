@@ -1,5 +1,6 @@
 // Cape PNGs live in the test app's data folder; only the selected tile is a browser preference.
 let capeLibrary=[];
+let capePreviewKey='';
 const selectedCapes=loadJsonPreference('selected_capes_v1',{});
 const wynntilsConnectionStatus={};
 const wynntilsStatusText={
@@ -19,6 +20,24 @@ function capesForProfile() {
 
 function selectedCape() {
     return capesForProfile().find(cape=>cape.id===selectedCapes[state.profile.toLowerCase()]);
+}
+
+function resetCapePreview() {
+    capePreviewKey='';
+    clearTurnableViewer('cape');
+    const host=document.getElementById('cape-character-preview');
+    host.querySelector('.turnable-skin-canvas')?.remove();
+    host.classList.remove('has-turnable-skin');
+}
+
+function updateCapeCharacterPreview(cape) {
+    if (!document.getElementById('view-capes').classList.contains('active')) return;
+    const account=state.accounts.find(item=>item.name.toLowerCase()===state.profile.toLowerCase());
+    const key=cape && account?.skin ? `${cape.id}:${account.name}:${account.skin}:${account.model}` : '';
+    if (key===capePreviewKey) return;
+    resetCapePreview();
+    capePreviewKey=key;
+    if (key) showTurnableViewer('cape',document.getElementById('cape-character-preview'),account.skin,account.model,300,370,`${account.name} wearing ${cape.name}`,cape.texture);
 }
 
 function renderCapeLibrary() {
@@ -68,8 +87,10 @@ function renderCapeLibrary() {
     if (selected) image.src=selected.texture;
     else image.removeAttribute('src');
     document.getElementById('cape-preview-placeholder').hidden=!!selected;
+    document.getElementById('cape-turn-hint').hidden=!(selected && state.accounts.some(account=>account.name.toLowerCase()===key && account.skin));
     document.getElementById('btn-apply-cape').disabled=!selected;
     document.getElementById('btn-remove-cape').disabled=!selected;
+    updateCapeCharacterPreview(selected);
 }
 
 async function initCapeLibrary() {

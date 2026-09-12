@@ -5,8 +5,8 @@ let renderingSkins = false;
 let renderAccountsAgain = false;
 const accountSkinSources = new Map();
 const scaledBannerCache = new Map();
-const turnableViewers = { skin: null };
-const turnableVersions = { skin: 0 };
+const turnableViewers = { skin: null, cape: null };
+const turnableVersions = { skin: 0, cape: 0 };
 const accountRotation = { viewer: null, image: null, name: '', angle: .18, frame: 0, version: 0 };
 let accountDragStart=null;
 let suppressAccountClickUntil=0;
@@ -91,7 +91,7 @@ function clearTurnableViewer(slot) {
     if (viewer) { viewer.dispose(); viewer.renderer.forceContextLoss(); turnableViewers[slot]=null; }
 }
 
-async function showTurnableViewer(slot, host, texture, model, width, height, label) {
+async function showTurnableViewer(slot, host, texture, model, width, height, label, capeTexture=null) {
     clearTurnableViewer(slot);
     host.querySelector('.turnable-skin-canvas')?.remove();
     host.classList.remove('has-turnable-skin');
@@ -109,13 +109,14 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
         viewer.controls.enablePan=false;
         viewer.globalLight.intensity=2.8;
         viewer.cameraLight.intensity=.7;
-        viewer.playerObject.rotation.y=.18;
+        viewer.playerObject.rotation.y=slot==='cape' ? Math.PI+.2 : .18;
         await viewer.loadSkin(texture,{model:model||'auto'});
+        if (capeTexture) await viewer.loadCape(capeTexture);
         if (turnableVersions[slot]!==version || !host.isConnected) {
             if (turnableViewers[slot]===viewer) clearTurnableViewer(slot);
             return;
         }
-        if (slot==='skin') {
+        if (slot==='skin' || slot==='cape') {
             canvas.tabIndex=0;
             canvas.setAttribute('role','img');
             canvas.setAttribute('aria-label',`${label}. Drag to turn, or use the left and right arrow keys.`);
@@ -1032,6 +1033,7 @@ function showView(viewName) {
     const isLibrarySurface=viewName==='library'||viewName==='favourites';
     if (viewName!=='accounts') stopAccountRotation();
     if (viewName!=='skins') clearTurnableViewer('skin');
+    if (viewName!=='capes') resetCapePreview();
 
     for (const view of els.views) {
         view.classList.toggle('active', isLibrarySurface ? view.id==='view-library' : view.id===`view-${viewName}`);

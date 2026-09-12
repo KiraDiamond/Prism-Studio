@@ -797,6 +797,9 @@ select,select option{background:var(--bg-hover);color:var(--text-primary)}
 .cape-preview-stage{min-height:390px;padding:28px;flex-direction:column;gap:14px}
 .cape-preview-stage img{width:min(100%,300px);height:auto;max-height:280px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 18px 24px #0008)}
 .cape-preview-stage img[hidden]{display:none}
+#cape-character-preview .turnable-skin-canvas{width:100%;height:100%;max-height:340px}
+#cape-character-preview.has-turnable-skin>#selected-cape-image,
+#cape-character-preview.has-turnable-skin>#cape-preview-placeholder{display:none}
 #cape-preview-placeholder{color:var(--text-muted);font-size:12px}
 .cape-grid{align-content:start}
 .cape-tile{min-height:150px}

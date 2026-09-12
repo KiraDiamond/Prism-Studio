@@ -42,6 +42,16 @@ fn emit_status(app: &tauri::AppHandle, account: &str, status: &'static str) {
     let _ = app.emit("wynntils-cape-status", CapeStatus { account: account.into(), status });
 }
 
+fn hide_and_restore_focus(window: &tauri::WebviewWindow) {
+    let was_visible = window.is_visible().unwrap_or(false);
+    let _ = window.hide();
+    if was_visible {
+        if let Some(main) = window.app_handle().get_webview_window("main") {
+            let _ = main.set_focus();
+        }
+    }
+}
+
 fn upload_script(cape: PendingCape) -> Result<String, String> {
     let image = serde_json::to_string(&cape.image).map_err(|e| e.to_string())?;
     let id = serde_json::to_string(&cape.id).map_err(|e| e.to_string())?;
@@ -125,8 +135,10 @@ fn open_window(app: tauri::AppHandle, account: String, key: String, refresh: boo
                 && page.url().host_str() == Some("account.wynntils.com")
                 && page.url().path() == "/profile.php";
             if !profile {
-                let _ = window.show();
-                let _ = window.set_focus();
+                if !window.is_visible().unwrap_or(false) {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
                 emit_status(window.app_handle(), &account_for_load, "login");
                 return;
             }
@@ -158,7 +170,7 @@ fn open_window(app: tauri::AppHandle, account: String, key: String, refresh: boo
                         },
                     }
                 } else {
-                    let _ = check_window.hide();
+                    hide_and_restore_focus(&check_window);
                 }
             });
         })
@@ -169,7 +181,7 @@ fn open_window(app: tauri::AppHandle, account: String, key: String, refresh: boo
                         if active.get(&key_for_title).map(String::as_str) == Some(id) { active.remove(&key_for_title) } else { None }
                     });
                     if matched.is_some() {
-                        if outcome == "applied" { let _ = window.hide(); }
+                        if outcome == "applied" { hide_and_restore_focus(&window); }
                         else { let _ = window.show(); }
                         emit_status(window.app_handle(), &account_for_title, if outcome == "applied" { "applied" } else { "error" });
                     }
