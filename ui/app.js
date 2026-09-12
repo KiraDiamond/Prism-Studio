@@ -10,6 +10,7 @@ const turnableVersions = { skin: 0 };
 const accountRotation = { viewer: null, image: null, name: '', angle: .18, frame: 0, version: 0 };
 let accountDragStart=null;
 let suppressAccountClickUntil=0;
+let wynntilsCapePreviewUrl=null;
 
 function stopAccountRotation() {
     accountRotation.version++;
@@ -177,6 +178,19 @@ const invoke = async (command,args) => {
     return window.__TAURI__.core.invoke(command,args);
 };
 
+function readCapeFile(file) {
+    return new Promise((resolve,reject)=>{
+        if (!file || !/\.png$/i.test(file.name) || file.size>500*1024) {
+            reject(new Error('Choose a cape PNG under 500 KB.'));
+            return;
+        }
+        const reader=new FileReader();
+        reader.onerror=()=>reject(new Error('Could not read the cape PNG.'));
+        reader.onload=()=>resolve(String(reader.result));
+        reader.readAsDataURL(file);
+    });
+}
+
 function loadJsonPreference(key, fallback) {
     try {
         const raw = localStorage.getItem(key);
@@ -251,6 +265,11 @@ const els = {
     btnWynntilsCape: document.getElementById('btn-wynntils-cape'),
     wynntilsCapeDialog: document.getElementById('wynntils-cape-dialog'),
     wynntilsCapeAccount: document.getElementById('wynntils-cape-account'),
+    wynntilsCapeFile: document.getElementById('wynntils-cape-file'),
+    wynntilsCapePreview: document.getElementById('wynntils-cape-preview'),
+    wynntilsCapeHandoff: document.getElementById('wynntils-cape-handoff'),
+    wynntilsCapePath: document.getElementById('wynntils-cape-path'),
+    wynntilsCapeStatus: document.getElementById('wynntils-cape-status'),
     btnAddAccount: document.getElementById('btn-add-account'),
     btnRefreshAccounts: document.getElementById('btn-refresh-accounts'),
     addAccountDialog: document.getElementById('add-account-dialog'),
@@ -1106,12 +1125,45 @@ function setupUIEvents() {
             : 'Choose a Minecraft account here after connecting it in Prism.';
         els.wynntilsCapeDialog.showModal();
     });
+    els.wynntilsCapeFile.addEventListener('change',()=>{
+        if (wynntilsCapePreviewUrl) URL.revokeObjectURL(wynntilsCapePreviewUrl);
+        const file=els.wynntilsCapeFile.files?.[0];
+        wynntilsCapePreviewUrl=file?URL.createObjectURL(file):null;
+        els.wynntilsCapePreview.hidden=!file;
+        if (file) els.wynntilsCapePreview.src=wynntilsCapePreviewUrl;
+        else els.wynntilsCapePreview.removeAttribute('src');
+        els.wynntilsCapeHandoff.hidden=true;
+        els.wynntilsCapeStatus.textContent='';
+    });
+    document.getElementById('btn-copy-wynntils-cape-path').addEventListener('click',async()=>{
+        try {
+            await navigator.clipboard.writeText(els.wynntilsCapePath.value);
+            els.wynntilsCapeStatus.textContent='PNG path copied. Paste it into Wynntils’ file picker.';
+        } catch {
+            els.wynntilsCapePath.focus();
+            els.wynntilsCapePath.select();
+            els.wynntilsCapeStatus.textContent='Copy the selected path, then paste it into Wynntils’ file picker.';
+        }
+    });
     document.getElementById('btn-close-wynntils-cape').addEventListener('click',()=>els.wynntilsCapeDialog.close());
     document.getElementById('btn-open-wynntils-capes').addEventListener('click',async()=>{
+        const button=document.getElementById('btn-open-wynntils-capes');
+        button.disabled=true;
+        els.wynntilsCapeFile.disabled=true;
         try {
+            const file=els.wynntilsCapeFile.files?.[0];
+            if (file) {
+                els.wynntilsCapeStatus.textContent='Preparing your cape PNG…';
+                const base64Data=await readCapeFile(file);
+                els.wynntilsCapePath.value=await invoke('prepare_wynntils_cape',{base64Data});
+                els.wynntilsCapeHandoff.hidden=false;
+                try { await navigator.clipboard.writeText(els.wynntilsCapePath.value); }
+                catch { /* The path remains available to copy in the dialog. */ }
+                els.wynntilsCapeStatus.textContent='On Wynntils, press Choose PNG and paste the path into the file picker. Check the preview, then press Save.';
+            }
             await invoke('open_wynntils_capes');
-            els.wynntilsCapeDialog.close();
-        } catch(error) { showToast(`Could not open Wynntils: ${String(error)}`,'error'); }
+        } catch(error) { els.wynntilsCapeStatus.textContent=String(error); }
+        finally { button.disabled=false;els.wynntilsCapeFile.disabled=false; }
     });
     els.btnAddAccount.addEventListener('click',()=>els.addAccountDialog.showModal());
     document.getElementById('btn-close-add-account').addEventListener('click',()=>els.addAccountDialog.close());
