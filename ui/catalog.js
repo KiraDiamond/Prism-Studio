@@ -68,7 +68,9 @@ function filterCapeCatalog() {
     const terms=value('cape-catalog-search').trim().toLowerCase().split(/\s+/).filter(Boolean);
     const color=value('cape-catalog-color'), shade=value('cape-catalog-shade');
     const size=value('cape-catalog-size'), tag=value('cape-catalog-tag'), guild=value('cape-catalog-guild');
+    const visibility=value('cape-catalog-visibility');
     const matches=capeCatalog.records.filter(cape=>{
+        if (visibility==='visible' && cape.coverage===0 || visibility==='transparent' && cape.coverage>0) return false;
         if (color && cape.color!==color || shade && cape.shade!==shade || size && cape.resolution!==size) return false;
         if (tag && !cape.tags.includes(tag)) return false;
         if (guild && (guild==='linked' ? !cape.guilds.length : !cape.guilds.some(link=>link.tag===guild))) return false;
@@ -108,9 +110,14 @@ function renderCapeCatalog() {
         card.className='cape-catalog-card'+(capeCatalog.selected?.sha1===cape.sha1?' active':'');
         card.dataset.sha=cape.sha1;
         card.setAttribute('aria-label',`${cape.id}, ${cape.color}, ${cape.resolution}`);
-        const image=document.createElement('img');
-        image.src=catalogAsset('back',cape.sha1);
-        image.alt=''; image.loading='lazy';
+        const image=document.createElement(cape.coverage===0?'div':'img');
+        if (cape.coverage===0) {
+            image.className='cape-catalog-no-preview';
+            image.textContent='Transparent back';
+        } else {
+            image.src=catalogAsset('back',cape.sha1);
+            image.alt=''; image.loading='lazy';
+        }
         const title=document.createElement('strong'); title.textContent=cape.id;
         const copies=capeCatalog.groupSizes.get(catalogGroup(cape));
         const subtitle=document.createElement('span'); subtitle.textContent=`${cape.color} · ${cape.resolution}${copies>1?' · '+copies+' alike':''}`;
@@ -136,8 +143,10 @@ function showCapeCatalogDetail(cape) {
     detail.replaceChildren();
     const heading=document.createElement('div'); heading.className='section-kicker'; heading.textContent='CAPE DETAILS';
     const title=document.createElement('h3'); title.textContent=cape.id;
-    const preview=document.createElement('img'); preview.className='cape-catalog-large';
-    preview.src=catalogAsset('back',cape.sha1); preview.alt=`Back of cape ${cape.id}`;
+    const preview=document.createElement(cape.coverage===0?'div':'img');
+    preview.className=cape.coverage===0?'cape-catalog-no-preview cape-catalog-large':'cape-catalog-large';
+    if (cape.coverage===0) preview.textContent='Transparent back';
+    else { preview.src=catalogAsset('back',cape.sha1); preview.alt=`Back of cape ${cape.id}`; }
     const facts=document.createElement('p'); facts.textContent=`${cape.resolution} · ${cape.color} · ${cape.shade} · ${Math.round(cape.coverage)}% back coverage`;
     const id=document.createElement('p'); id.className='cape-catalog-hash'; id.textContent=`SHA-1 ${cape.sha1}`;
     const palette=document.createElement('div'); palette.className='cape-catalog-palette';
@@ -192,7 +201,7 @@ async function saveCatalogCape(cape,button) {
     }
 }
 
-for (const id of ['cape-catalog-search','cape-catalog-color','cape-catalog-shade','cape-catalog-size','cape-catalog-tag','cape-catalog-guild','cape-catalog-repeats']) {
+for (const id of ['cape-catalog-search','cape-catalog-color','cape-catalog-shade','cape-catalog-size','cape-catalog-tag','cape-catalog-guild','cape-catalog-visibility','cape-catalog-repeats']) {
     document.getElementById(id).addEventListener(id==='cape-catalog-search'?'input':'change',filterCapeCatalog);
 }
 document.getElementById('cape-catalog-clear').addEventListener('click',()=>{
@@ -200,6 +209,7 @@ document.getElementById('cape-catalog-clear').addEventListener('click',()=>{
         document.getElementById(id).value='';
     }
     document.getElementById('cape-catalog-repeats').value='all';
+    document.getElementById('cape-catalog-visibility').value='visible';
     filterCapeCatalog();
 });
 document.getElementById('cape-catalog-grid').addEventListener('click',event=>{
