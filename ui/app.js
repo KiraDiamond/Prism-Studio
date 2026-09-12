@@ -4,6 +4,59 @@ const skinHeads = new Map();
 let renderingSkins = false;
 let renderAccountsAgain = false;
 const accountSkinSources = new Map();
+const turnableViewers = { account: null, skin: null };
+const turnableVersions = { account: 0, skin: 0 };
+
+function clearTurnableViewer(slot) {
+    turnableVersions[slot]++;
+    const viewer=turnableViewers[slot];
+    if (viewer) { viewer.dispose(); viewer.renderer.forceContextLoss(); turnableViewers[slot]=null; }
+}
+
+async function showTurnableViewer(slot, host, texture, model, width, height, label) {
+    clearTurnableViewer(slot);
+    host.querySelector('.turnable-skin-canvas')?.remove();
+    host.classList.remove('has-turnable-skin');
+    if (!texture) return;
+    const version=turnableVersions[slot];
+    let viewer;
+    try {
+        const {SkinViewer}=await import('./skinview.bundle.js');
+        if (turnableVersions[slot]!==version || !host.isConnected) return;
+        const canvas=document.createElement('canvas');
+        canvas.className='turnable-skin-canvas';
+        viewer=new SkinViewer({canvas,width,height,pixelRatio:1,zoom:.9,fov:35,enableControls:true});
+        turnableViewers[slot]=viewer;
+        viewer.controls.enableZoom=false;
+        viewer.controls.enablePan=false;
+        viewer.globalLight.intensity=2.8;
+        viewer.cameraLight.intensity=.7;
+        viewer.playerObject.rotation.y=.18;
+        await viewer.loadSkin(texture,{model:model||'auto'});
+        if (turnableVersions[slot]!==version || !host.isConnected) {
+            if (turnableViewers[slot]===viewer) clearTurnableViewer(slot);
+            return;
+        }
+        if (slot==='skin') {
+            canvas.tabIndex=0;
+            canvas.setAttribute('role','img');
+            canvas.setAttribute('aria-label',`${label}. Drag to turn, or use the left and right arrow keys.`);
+            canvas.addEventListener('keydown',event=>{
+                if (event.key==='ArrowLeft' || event.key==='ArrowRight') {
+                    event.preventDefault();
+                    viewer.playerObject.rotation.y+=event.key==='ArrowLeft' ? -.25 : .25;
+                }
+            });
+        }
+        host.append(canvas);
+        host.classList.add('has-turnable-skin');
+    } catch(error) {
+        if (turnableVersions[slot]===version) {
+            console.error('Interactive skin preview failed',error);
+            if (turnableViewers[slot]===viewer) clearTurnableViewer(slot);
+        }
+    }
+}
 async function prepareAccountSkins() {
     if (renderingSkins) {renderAccountsAgain=true;return;}
     renderingSkins = true;
@@ -407,7 +460,6 @@ function createInstanceCard(instance) {
     card.innerHTML = `
         <div class="card-banner">
             <div class="card-banner-bg"></div>
-            <img class="card-banner-icon" alt="">
             <button class="card-fav-btn ${isFavourite ? 'active' : ''}" data-action="favorite"
                     aria-label="Toggle favourite" aria-pressed="${isFavourite}">
                 <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="m12 3 2.67 5.41 5.97.87-4.32 4.21 1.02 5.95L12 16.63l-5.34 2.81 1.02-5.95-4.32-4.21 5.97-.87L12 3Z"/></svg>
@@ -428,7 +480,7 @@ function createInstanceCard(instance) {
         </div>
     `;
 
-    applyInstanceArtwork(card.querySelector('.card-banner-bg'), card.querySelector('.card-banner-icon'), instance);
+    applyInstanceArtwork(card.querySelector('.card-banner-bg'), null, instance);
     return card;
 }
 
@@ -620,6 +672,7 @@ function blockCharacterMarkup(account, index) {
 }
 
 function renderAccountCarousel() {
+    clearTurnableViewer('account');
     els.accountCarousel.replaceChildren();
     els.accountRoster.replaceChildren();
 
@@ -642,7 +695,7 @@ function renderAccountCarousel() {
         if (Math.abs(offset)>2) wrap.classList.add('hidden-character');
         wrap.style.border='0';
         wrap.style.background='transparent';
-        wrap.setAttribute('aria-label','Select '+account.name);wrap.setAttribute('aria-pressed',String(account.name===state.profile));
+        wrap.setAttribute('aria-label',`Select ${account.name}${offset===0&&account.skin ? '. Drag to turn the character' : ''}`);wrap.setAttribute('aria-pressed',String(account.name===state.profile));
         wrap.tabIndex=Math.abs(offset)>2?-1:0;
         wrap.innerHTML=blockCharacterMarkup(account,index);
         els.accountCarousel.appendChild(wrap);
@@ -671,6 +724,10 @@ function renderAccountCarousel() {
 
     const choose=document.getElementById('select-carousel-profile');
     if (choose) choose.addEventListener('click',() => setProfile(selected.name));
+    if (selected.skin && document.getElementById('view-accounts').classList.contains('active')) {
+        const character=els.accountCarousel.querySelector('.account-character[data-offset="0"]');
+        if (character) showTurnableViewer('account',character,selected.skin,selected.model,240,390,selected.name);
+    }
 }
 
 function moveAccountCarousel(delta) {
@@ -824,6 +881,8 @@ function activateNav(viewName) {
 
 function showView(viewName) {
     const isLibrarySurface=viewName==='library'||viewName==='favourites';
+    if (viewName!=='accounts') clearTurnableViewer('account');
+    if (viewName!=='skins') clearTurnableViewer('skin');
 
     for (const view of els.views) {
         view.classList.toggle('active', isLibrarySurface ? view.id==='view-library' : view.id===`view-${viewName}`);
@@ -931,7 +990,20 @@ function setupUIEvents() {
 
     els.accountPrev.addEventListener('click',()=>moveAccountCarousel(-1));
     els.accountNext.addEventListener('click',()=>moveAccountCarousel(1));
+    let accountDragStart=null;
+    let suppressAccountClickUntil=0;
+    els.accountCarousel.addEventListener('pointerdown',event=>{
+        accountDragStart=event.target.closest('.account-character[data-offset="0"]')
+            ? {x:event.clientX,y:event.clientY} : null;
+    });
+    els.accountCarousel.addEventListener('pointerup',event=>{
+        if (accountDragStart && Math.hypot(event.clientX-accountDragStart.x,event.clientY-accountDragStart.y)>5) {
+            suppressAccountClickUntil=Date.now()+300;
+        }
+        accountDragStart=null;
+    });
     els.accountCarousel.addEventListener('click',event=>{
+        if (event.detail && Date.now()<suppressAccountClickUntil) return;
         const character=event.target.closest('.account-character');
         if (character) {
             const index=Number(character.dataset.index);

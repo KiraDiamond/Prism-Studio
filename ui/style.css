@@ -376,7 +376,6 @@ input, select { user-select: text; }
 .card-banner { height:126px; position:relative; overflow:hidden; background:var(--bg-base); }
 .card-banner-bg { position:absolute; inset:-18px; background-size:cover; background-position:center; filter:blur(20px) brightness(.42) saturate(.78); transform:scale(1.08); }
 .card-banner::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(9,10,12,.03),rgba(17,19,23,.94)); }
-.card-banner-icon { width:72px; height:72px; position:absolute; z-index:2; left:14px; bottom:12px; object-fit:contain; border-radius:10px; filter:drop-shadow(0 8px 16px rgba(0,0,0,.52)); }
 .card-fav-btn { width:28px; height:28px; position:absolute; z-index:3; top:10px; right:10px; display:grid; place-items:center; border-radius:50%; border:1px solid rgba(255,255,255,.09); background:rgba(9,10,12,.68); color:var(--text-muted); cursor:pointer; }
 .card-fav-btn.active { color:var(--accent-amber); }
 .card-content { min-width:0; flex:1; padding:13px 14px 14px; display:flex; flex-direction:column; }
@@ -732,14 +731,14 @@ select,select option{background:var(--bg-hover);color:var(--text-primary)}
 .grid-container.compact-view{grid-template-columns:1fr;gap:4px}
 .compact-view .card{flex-direction:row;min-height:54px;border-radius:5px}
 .compact-view .card-banner{width:52px;height:54px;flex:0 0 52px}
-.compact-view .card-banner-icon{width:34px;height:34px}.compact-view .card-fav-btn{top:0;right:0;width:19px;height:19px}
+.compact-view .card-fav-btn{top:0;right:0;width:19px;height:19px}
 .compact-view .card-content{flex-direction:row;align-items:center;gap:12px;padding:6px 10px;min-width:0}
 .compact-view .card-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .compact-view .card-meta{margin:0}.compact-view .card-playtime{display:none}.compact-view .card-actions{margin:0;flex-shrink:0}
 .instance-list-heading,.list-view .card-content{display:grid;grid-template-columns:minmax(150px,1.6fr) minmax(115px,1fr) minmax(95px,.8fr) 85px 150px;gap:12px;align-items:center}
 .instance-list-heading{padding:10px 14px 10px 70px;color:var(--text-secondary);font-size:11px;border-bottom:1px solid var(--border-strong)}
 .list-view{overflow-x:auto}.list-view .card,.instance-list-heading{min-width:730px}
-.list-view .card{min-height:68px}.list-view .card-banner{width:56px;flex:0 0 56px}.list-view .card-banner-icon{width:36px;height:36px}
+.list-view .card{min-height:68px}.list-view .card-banner{width:56px;flex:0 0 56px}
 .list-view .card-content{padding:10px 14px;width:100%;min-width:0}.list-view .card-title{width:auto;min-width:0}
 .list-view .card-meta{flex-wrap:wrap}.list-view .card-last-played{display:block;color:var(--text-secondary);font-size:11px}
 .list-view .card-playtime{margin:0;font-size:11px}.list-view .card-actions{width:150px}
@@ -770,7 +769,6 @@ select,select option{background:var(--bg-hover);color:var(--text-primary)}
 .card-banner-bg{inset:0;background-size:cover;background-position:center;filter:none;transform:none;image-rendering:pixelated}
 .card-banner::after{display:none}
 .list-view .card-banner{width:72px;flex-basis:72px}
-.list-view .card-banner-icon{width:52px;height:52px;left:8px;bottom:8px}
 .list-view .card-fav-btn{top:4px;right:4px;width:24px;height:24px}
 .instance-list-heading{padding-left:86px}
 .account-carousel{z-index:2}
@@ -788,3 +786,13 @@ select,select option{background:var(--bg-hover);color:var(--text-primary)}
 .account-type-tab:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:2px}
 .add-account-content{padding:22px}
 @media(max-width:800px){.account-header-actions{width:100%}.account-selector select{width:180px;max-width:50vw}}
+
+.turnable-skin-canvas{display:block;touch-action:none;cursor:grab}
+.turnable-skin-canvas:active{cursor:grabbing}
+.account-character .turnable-skin-canvas{width:240px;height:390px}
+.account-character.has-turnable-skin>.real-character{display:none}
+#skin-preview-character .turnable-skin-canvas{width:100%;height:100%}
+#skin-preview-character.has-turnable-skin>.pack-preview-image,
+#skin-preview-character.has-turnable-skin>div{display:none!important}
+.skin-turn-hint{position:absolute;right:12px;bottom:12px;z-index:3;padding:5px 8px;border-radius:var(--radius-sm);background:rgba(9,10,12,.75);color:var(--text-secondary);font-size:10px;pointer-events:none}
+.skin-turn-hint[hidden]{display:none}

@@ -85,6 +85,12 @@ function renderSelectedSkin(skin,pack=activeSkinPack()) {
     els.skinPreviewCharacter.classList.toggle('has-real-skin',!!skin?.render);
     els.skinPreviewCharacter.querySelector('.pack-preview-image')?.remove();
     if(skin?.render){const img=document.createElement('img');img.className='pack-preview-image';img.src=skin.render;img.alt=skin.name;els.skinPreviewCharacter.append(img);}
+    document.getElementById('skin-turn-hint').hidden=!skin?.texture;
+    if (document.getElementById('view-skins').classList.contains('active')) {
+        showTurnableViewer('skin',els.skinPreviewCharacter,skin?.texture,skin?.model,260,360,skin?.name||'Skin');
+    } else {
+        clearTurnableViewer('skin');
+    }
     els.selectedSkinName.value=skin?.name || '';
     els.selectedSkinName.disabled=!skin;
     els.selectedSkinPackLabel.textContent=pack.name;
