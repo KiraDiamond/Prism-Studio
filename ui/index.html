@@ -259,11 +259,12 @@
                         <label for="cape-account-select">Account</label>
                         <select id="cape-account-select" aria-label="Minecraft account for capes"></select>
                         <button id="btn-connect-wynntils" class="btn btn-secondary" type="button">Wynntils login</button>
+                        <button id="btn-browse-wynntils" class="btn btn-secondary" type="button" aria-pressed="false">Browse catalog</button>
                         <button id="btn-add-cape" class="btn btn-primary" type="button">+ Add cape</button>
                         <input id="cape-file-input" type="file" accept="image/png,.png" multiple hidden>
                     </div>
                 </header>
-                <div class="skins-workspace cape-workspace">
+                <div id="cape-saved-workspace" class="skins-workspace cape-workspace">
                     <section class="skin-feature-panel">
                         <div class="skin-feature-top">
                             <div>
@@ -296,6 +297,31 @@
                         </div>
                     </section>
                 </div>
+                <section id="cape-catalog-workspace" class="cape-catalog-workspace" hidden>
+                    <div class="cape-catalog-heading">
+                        <div><div class="section-kicker">APPROVED CAPES</div><h3>Wynntils catalog</h3><p id="cape-catalog-source">Loading catalog…</p></div>
+                        <span id="cape-catalog-count" class="skin-count-label" role="status">0 capes</span>
+                    </div>
+                    <div class="cape-catalog-filters">
+                        <label>Search <input id="cape-catalog-search" type="search" placeholder="ID, tag, guild, color" autocomplete="off"></label>
+                        <label>Color <select id="cape-catalog-color"><option value="">All colors</option></select></label>
+                        <label>Shade <select id="cape-catalog-shade"><option value="">All shades</option></select></label>
+                        <label>Size <select id="cape-catalog-size"><option value="">All sizes</option></select></label>
+                        <label>Tag <select id="cape-catalog-tag"><option value="">All tags</option></select></label>
+                        <label>Guild <select id="cape-catalog-guild"><option value="">All guild links</option><option value="linked">Guild-linked only</option></select></label>
+                        <button id="cape-catalog-clear" class="btn btn-secondary" type="button">Clear filters</button>
+                    </div>
+                    <div class="cape-catalog-content">
+                        <div class="cape-catalog-results">
+                            <div id="cape-catalog-grid" class="cape-catalog-grid"></div>
+                            <p id="cape-catalog-empty" class="skin-pack-empty" hidden>No capes match these filters.</p>
+                            <button id="cape-catalog-more" class="btn btn-secondary" type="button" hidden>Show more</button>
+                        </div>
+                        <aside id="cape-catalog-detail" class="cape-catalog-detail" aria-live="polite">
+                            <p class="skin-backend-note">Choose a cape to view its colors and tags.</p>
+                        </aside>
+                    </div>
+                </section>
             </div>
 
             <!-- SETTINGS -->
@@ -473,5 +499,6 @@
     <script src="skin-library.js"></script>
     <script src="skin-packs.js"></script>
     <script src="capes.js"></script>
+    <script src="catalog.js"></script>
 </body>
 </html>

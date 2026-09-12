@@ -6,6 +6,7 @@ let renderAccountsAgain = false;
 const accountSkinSources = new Map();
 const scaledBannerCache = new Map();
 const turnableViewers = { skin: null, cape: null };
+const pendingTurnableViewers = { skin: null, cape: null };
 const turnableVersions = { skin: 0, cape: 0 };
 const accountRotation = { viewer: null, image: null, name: '', angle: .18, frame: 0, version: 0 };
 let accountDragStart=null;
@@ -87,14 +88,25 @@ function drawAccountRotation() {
 
 function clearTurnableViewer(slot) {
     turnableVersions[slot]++;
-    const viewer=turnableViewers[slot];
-    if (viewer) { viewer.dispose(); viewer.renderer.forceContextLoss(); turnableViewers[slot]=null; }
+    for (const viewer of [turnableViewers[slot],pendingTurnableViewers[slot]]) {
+        if (viewer && !viewer.disposed) { viewer.canvas.remove(); viewer.dispose(); viewer.renderer.forceContextLoss(); }
+    }
+    turnableViewers[slot]=null;
+    pendingTurnableViewers[slot]=null;
 }
 
 async function showTurnableViewer(slot, host, texture, model, width, height, label, capeTexture=null) {
-    host.querySelector('.turnable-skin-canvas')?.remove();
-    host.classList.remove('has-turnable-skin');
-    clearTurnableViewer(slot);
+    const keepCurrent=slot==='cape' && !!turnableViewers[slot] && !!host.querySelector('.turnable-skin-canvas');
+    if (keepCurrent) {
+        turnableVersions[slot]++;
+        const pending=pendingTurnableViewers[slot];
+        if (pending && !pending.disposed) { pending.canvas.remove(); pending.dispose(); pending.renderer.forceContextLoss(); }
+        pendingTurnableViewers[slot]=null;
+    } else {
+        host.querySelector('.turnable-skin-canvas')?.remove();
+        host.classList.remove('has-turnable-skin');
+        clearTurnableViewer(slot);
+    }
     if (!texture) return;
     const version=turnableVersions[slot];
     let viewer;
@@ -105,7 +117,8 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
         canvas.className='turnable-skin-canvas';
         canvas.style.opacity='0';
         viewer=new SkinViewer({canvas,width,height,pixelRatio:1,zoom:.9,fov:35,enableControls:true,renderPaused:true,preserveDrawingBuffer:true});
-        turnableViewers[slot]=viewer;
+        if (keepCurrent) pendingTurnableViewers[slot]=viewer;
+        else turnableViewers[slot]=viewer;
         viewer.controls.enableZoom=false;
         viewer.controls.enablePan=false;
         viewer.globalLight.intensity=2.8;
@@ -114,7 +127,9 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
         await viewer.loadSkin(texture,{model:model||'auto'});
         if (capeTexture) await viewer.loadCape(capeTexture);
         if (turnableVersions[slot]!==version || !host.isConnected) {
-            if (turnableViewers[slot]===viewer) clearTurnableViewer(slot);
+            if (!viewer.disposed) { viewer.canvas.remove(); viewer.dispose(); viewer.renderer.forceContextLoss(); }
+            if (pendingTurnableViewers[slot]===viewer) pendingTurnableViewers[slot]=null;
+            if (turnableViewers[slot]===viewer) turnableViewers[slot]=null;
             return;
         }
         if (slot==='skin' || slot==='cape') {
@@ -138,13 +153,23 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
                 if (turnableVersions[slot]===version && host.isConnected) {
                     canvas.style.opacity='1';
                     host.classList.add('has-turnable-skin');
+                    if (keepCurrent) {
+                        const previous=turnableViewers[slot];
+                        previous.canvas.remove();
+                        previous.dispose();
+                        previous.renderer.forceContextLoss();
+                        turnableViewers[slot]=viewer;
+                        pendingTurnableViewers[slot]=null;
+                    }
                 }
             });
         });
     } catch(error) {
         if (turnableVersions[slot]===version) {
             console.error('Interactive skin preview failed',error);
-            if (turnableViewers[slot]===viewer) clearTurnableViewer(slot);
+            if (viewer && !viewer.disposed) { viewer.canvas.remove(); viewer.dispose(); viewer.renderer.forceContextLoss(); }
+            if (pendingTurnableViewers[slot]===viewer) pendingTurnableViewers[slot]=null;
+            if (turnableViewers[slot]===viewer) turnableViewers[slot]=null;
             if (slot==='cape') {
                 document.getElementById('cape-preview-placeholder').textContent='Character preview unavailable';
                 document.getElementById('cape-turn-hint').hidden=true;

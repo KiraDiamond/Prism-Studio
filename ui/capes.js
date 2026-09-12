@@ -25,7 +25,7 @@ function selectedCape() {
 function resetCapePreview() {
     capePreviewKey='';
     const host=document.getElementById('cape-character-preview');
-    host.querySelector('.turnable-skin-canvas')?.remove();
+    host.querySelectorAll('.turnable-skin-canvas').forEach(canvas=>canvas.remove());
     host.classList.remove('has-turnable-skin');
     clearTurnableViewer('cape');
 }
@@ -35,7 +35,7 @@ function updateCapeCharacterPreview(cape) {
     const account=state.accounts.find(item=>item.name.toLowerCase()===state.profile.toLowerCase());
     const key=cape && account?.skin ? `${cape.id}:${account.name}:${account.skin}:${account.model}` : '';
     if (key===capePreviewKey) return;
-    resetCapePreview();
+    if (!key) resetCapePreview();
     capePreviewKey=key;
     if (key) showTurnableViewer('cape',document.getElementById('cape-character-preview'),account.skin,account.model,300,370,`${account.name} wearing ${cape.name}`,cape.texture);
 }
@@ -171,6 +171,7 @@ function setupCapeEvents() {
             renderCapeLibrary();
         } catch(error) { showToast('Could not open Wynntils login: '+String(error),'error'); }
     });
+    document.getElementById('btn-browse-wynntils').addEventListener('click',()=>showCapeCatalog());
     document.getElementById('btn-add-cape').addEventListener('click',()=>{
         if (!state.profile) { showToast('Choose a Minecraft account first.','error'); return; }
         const input=document.getElementById('cape-file-input');
