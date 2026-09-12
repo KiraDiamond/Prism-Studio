@@ -83,11 +83,32 @@ function renderCapeLibrary() {
     name.value=selected?.name||'';
     name.disabled=!selected;
     const image=document.getElementById('selected-cape-image');
-    image.hidden=!selected;
-    if (selected) image.src=selected.texture;
-    else image.removeAttribute('src');
-    document.getElementById('cape-preview-placeholder').hidden=!!selected;
-    document.getElementById('cape-turn-hint').hidden=!(selected && state.accounts.some(account=>account.name.toLowerCase()===key && account.skin));
+    const placeholder=document.getElementById('cape-preview-placeholder');
+    const hasCharacter=!!(selected && state.accounts.some(account=>account.name.toLowerCase()===key && account.skin));
+    if (selected && !hasCharacter) {
+        placeholder.textContent='Loading cape preview…';
+        if (image.dataset.capeId!==selected.id) {
+            image.hidden=true;
+            placeholder.hidden=false;
+            image.dataset.capeId=selected.id;
+            image.removeAttribute('src');
+            image.onload=()=>{
+                if (image.dataset.capeId===selected.id) {
+                    image.hidden=false;
+                    placeholder.hidden=true;
+                }
+            };
+            image.src=selected.texture;
+        } else placeholder.hidden=!image.hidden;
+    } else {
+        image.hidden=true;
+        image.onload=null;
+        image.dataset.capeId='';
+        image.removeAttribute('src');
+        placeholder.textContent=selected?'Loading character preview…':'Choose a cape to preview';
+        placeholder.hidden=false;
+    }
+    document.getElementById('cape-turn-hint').hidden=!hasCharacter;
     document.getElementById('btn-apply-cape').disabled=!selected;
     document.getElementById('btn-remove-cape').disabled=!selected;
     updateCapeCharacterPreview(selected);

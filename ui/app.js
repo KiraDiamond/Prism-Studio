@@ -141,6 +141,10 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
         if (turnableVersions[slot]===version) {
             console.error('Interactive skin preview failed',error);
             if (turnableViewers[slot]===viewer) clearTurnableViewer(slot);
+            if (slot==='cape') {
+                document.getElementById('cape-preview-placeholder').textContent='Character preview unavailable';
+                document.getElementById('cape-turn-hint').hidden=true;
+            }
         }
     }
 }
