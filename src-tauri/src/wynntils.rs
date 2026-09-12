@@ -116,7 +116,10 @@ fn open_window(app: tauri::AppHandle, account: String, key: String, refresh: boo
     let url = PROFILE.parse::<tauri::Url>().map_err(|e| e.to_string())?;
     if let Some(window) = app.get_webview_window(&label) {
         if interactive { window.show().map_err(|e| e.to_string())?; window.set_focus().map_err(|e| e.to_string())?; }
-        if refresh { window.navigate(url).map_err(|e| e.to_string())?; }
+        if refresh {
+            hide_and_restore_focus(&window);
+            window.navigate(url).map_err(|e| e.to_string())?;
+        }
         return Ok(());
     }
     let directory = session_directory(&id)?;
