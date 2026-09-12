@@ -4,6 +4,7 @@ const skinHeads = new Map();
 let renderingSkins = false;
 let renderAccountsAgain = false;
 const accountSkinSources = new Map();
+const scaledBannerCache = new Map();
 const turnableViewers = { account: null, skin: null };
 const turnableVersions = { account: 0, skin: 0 };
 
@@ -25,7 +26,7 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
         if (turnableVersions[slot]!==version || !host.isConnected) return;
         const canvas=document.createElement('canvas');
         canvas.className='turnable-skin-canvas';
-        viewer=new SkinViewer({canvas,width,height,pixelRatio:1,zoom:.9,fov:35,enableControls:true});
+        viewer=new SkinViewer({canvas,width,height,pixelRatio:1,zoom:.9,fov:35,enableControls:true,renderPaused:true,preserveDrawingBuffer:true});
         turnableViewers[slot]=viewer;
         viewer.controls.enableZoom=false;
         viewer.controls.enablePan=false;
@@ -48,8 +49,16 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
                 }
             });
         }
+        viewer.render();
+        canvas.style.opacity='0';
         host.append(canvas);
-        host.classList.add('has-turnable-skin');
+        viewer.renderPaused=false;
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+            if (turnableVersions[slot]===version && host.isConnected) {
+                canvas.style.opacity='1';
+                host.classList.add('has-turnable-skin');
+            }
+        }));
     } catch(error) {
         if (turnableVersions[slot]===version) {
             console.error('Interactive skin preview failed',error);
@@ -480,8 +489,46 @@ function createInstanceCard(instance) {
         </div>
     `;
 
-    applyInstanceArtwork(card.querySelector('.card-banner-bg'), null, instance);
+    const banner=card.querySelector('.card-banner-bg');
+    applyInstanceArtwork(banner, null, instance);
+    if (state.viewMode==='grid' && instance.icon) {
+        scaledBannerArtwork(instance.icon).then(scaled=>{
+            if (scaled && banner.isConnected) {
+                banner.style.backgroundImage=cssUrl(scaled);
+                banner.classList.add('scaled-banner');
+            }
+        });
+    }
     return card;
+}
+
+function scaledBannerArtwork(icon) {
+    if (!scaledBannerCache.has(icon)) scaledBannerCache.set(icon,(async()=>{
+        const image=new Image();
+        image.src=icon;
+        await image.decode();
+        if (Math.max(image.naturalWidth,image.naturalHeight)>128) return null;
+        const width=512, height=256;
+        const factor=Math.min(width/image.naturalWidth,height/image.naturalHeight);
+        const scaledWidth=Math.round(image.naturalWidth*factor);
+        const scaledHeight=Math.round(image.naturalHeight*factor);
+        const canvas=document.createElement('canvas');
+        canvas.width=width;canvas.height=height;
+        const context=canvas.getContext('2d');
+        context.fillStyle='#090a0c';
+        context.fillRect(0,0,width,height);
+        context.imageSmoothingEnabled=true;
+        context.imageSmoothingQuality='high';
+        let source=image;
+        if (typeof createImageBitmap==='function') {
+            try { source=await createImageBitmap(image,{resizeWidth:scaledWidth,resizeHeight:scaledHeight,resizeQuality:'high'}); }
+            catch { source=image; }
+        }
+        context.drawImage(source,(width-scaledWidth)/2,(height-scaledHeight)/2,scaledWidth,scaledHeight);
+        if (source!==image) source.close();
+        return canvas.toDataURL('image/webp',.92);
+    })().catch(error=>{console.error('Banner scaling failed',error);return null}));
+    return scaledBannerCache.get(icon);
 }
 
 function applyInstanceArtwork(backgroundElement, imageElement, instance) {
