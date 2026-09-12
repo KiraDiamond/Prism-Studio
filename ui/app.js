@@ -5,8 +5,84 @@ let renderingSkins = false;
 let renderAccountsAgain = false;
 const accountSkinSources = new Map();
 const scaledBannerCache = new Map();
-const turnableViewers = { account: null, skin: null };
-const turnableVersions = { account: 0, skin: 0 };
+const turnableViewers = { skin: null };
+const turnableVersions = { skin: 0 };
+const accountRotation = { viewer: null, image: null, name: '', angle: .18, frame: 0, version: 0 };
+let accountDragStart=null;
+let suppressAccountClickUntil=0;
+
+function stopAccountRotation() {
+    accountRotation.version++;
+    accountDragStart=null;
+    if (accountRotation.frame) cancelAnimationFrame(accountRotation.frame);
+    accountRotation.frame=0;
+    const viewer=accountRotation.viewer;
+    if (viewer && !viewer.disposed) viewer.controls.enabled=false;
+    if (accountRotation.image) {
+        const front=skinRenders.get(accountRotation.name);
+        if (front) accountRotation.image.src=front;
+        else if (viewer && !viewer.disposed) {
+            viewer.playerObject.rotation.y=.18;
+            viewer.render();
+            accountRotation.image.src=viewer.canvas.toDataURL('image/png');
+        }
+    }
+    if (viewer && !viewer.disposed) {
+        viewer.playerObject.rotation.y=.18;
+        viewer.dispose();
+        viewer.renderer.forceContextLoss();
+    }
+    accountRotation.viewer=null;
+    accountRotation.image=null;
+    accountRotation.name='';
+    accountRotation.angle=.18;
+}
+
+async function prepareAccountRotation(account, host) {
+    const version=accountRotation.version;
+    let viewer;
+    try {
+        const {SkinViewer}=await import('./skinview.bundle.js');
+        if (version!==accountRotation.version || !host.isConnected) return;
+        const canvas=document.createElement('canvas');
+        viewer=new SkinViewer({canvas,width:260,height:420,pixelRatio:1,zoom:.9,fov:35,enableControls:false,renderPaused:true,preserveDrawingBuffer:true});
+        accountRotation.viewer=viewer;
+        viewer.globalLight.intensity=2.8;
+        viewer.cameraLight.intensity=.7;
+        viewer.playerObject.rotation.y=.18;
+        await viewer.loadSkin(account.skin,{model:account.model||'default'});
+        if (version!==accountRotation.version || !host.isConnected) return;
+        viewer.render();
+        let image=host.querySelector('img.real-character');
+        if (!image) {
+            image=document.createElement('img');
+            image.className='real-character';
+            image.alt=account.name;
+            image.draggable=false;
+            image.src=canvas.toDataURL('image/png');
+            host.replaceChildren(image);
+        }
+        accountRotation.image=image;
+        accountRotation.name=account.name;
+        accountRotation.angle=.18;
+    } catch(error) {
+        if (version===accountRotation.version) console.error('Account rotation failed',error);
+    } finally {
+        if (viewer && (version!==accountRotation.version || !accountRotation.image)) {
+            if (!viewer.disposed) { viewer.dispose(); viewer.renderer.forceContextLoss(); }
+            if (accountRotation.viewer===viewer) accountRotation.viewer=null;
+        }
+    }
+}
+
+function drawAccountRotation() {
+    accountRotation.frame=0;
+    const {viewer,image,angle}=accountRotation;
+    if (!viewer || viewer.disposed || !image?.isConnected) return;
+    viewer.playerObject.rotation.y=angle;
+    viewer.render();
+    image.src=viewer.canvas.toDataURL('image/png');
+}
 
 function clearTurnableViewer(slot) {
     turnableVersions[slot]++;
@@ -715,11 +791,11 @@ function circularOffset(index, current, total) {
 
 function blockCharacterMarkup(account, index) {
     const image=skinRenders.get(account.name);
-    return image ? '<img class="real-character" src="'+image+'" alt="'+escapeHTML(account.name)+'">' : '<div class="real-character"></div>';
+    return image ? '<img class="real-character" draggable="false" src="'+image+'" alt="'+escapeHTML(account.name)+'">' : '<div class="real-character"></div>';
 }
 
 function renderAccountCarousel() {
-    clearTurnableViewer('account');
+    stopAccountRotation();
     els.accountCarousel.replaceChildren();
     els.accountRoster.replaceChildren();
 
@@ -773,12 +849,13 @@ function renderAccountCarousel() {
     if (choose) choose.addEventListener('click',() => setProfile(selected.name));
     if (selected.skin && document.getElementById('view-accounts').classList.contains('active')) {
         const character=els.accountCarousel.querySelector('.account-character[data-offset="0"]');
-        if (character) showTurnableViewer('account',character,selected.skin,selected.model,240,390,selected.name);
+        if (character) prepareAccountRotation(selected,character);
     }
 }
 
 function moveAccountCarousel(delta) {
     if (!state.accounts.length) return;
+    stopAccountRotation();
     const total=state.accounts.length;
     state.accountCarouselIndex=(state.accountCarouselIndex+delta+total)%total;
     renderAccountCarousel();
@@ -928,7 +1005,7 @@ function activateNav(viewName) {
 
 function showView(viewName) {
     const isLibrarySurface=viewName==='library'||viewName==='favourites';
-    if (viewName!=='accounts') clearTurnableViewer('account');
+    if (viewName!=='accounts') stopAccountRotation();
     if (viewName!=='skins') clearTurnableViewer('skin');
 
     for (const view of els.views) {
@@ -956,6 +1033,7 @@ function setFilter(filter,syncNavigation=true) {
 
 function setProfile(profileName) {
     if (!profileName||!state.accounts.some(account=>account.name===profileName)) return;
+    stopAccountRotation();
     state.profile=profileName;
     localStorage.setItem('selected_profile',profileName);
     renderHeaderAccounts();
@@ -1037,30 +1115,42 @@ function setupUIEvents() {
 
     els.accountPrev.addEventListener('click',()=>moveAccountCarousel(-1));
     els.accountNext.addEventListener('click',()=>moveAccountCarousel(1));
-    let accountDragStart=null;
-    let suppressAccountClickUntil=0;
+    els.accountCarousel.addEventListener('dragstart',event=>event.preventDefault());
     els.accountCarousel.addEventListener('pointerdown',event=>{
-        accountDragStart=event.target.closest('.account-character[data-offset="0"]')
-            ? {x:event.clientX,y:event.clientY} : null;
+        const character=event.target.closest('.account-character[data-offset="0"]');
+        accountDragStart=character && accountRotation.viewer && !accountRotation.viewer.disposed
+            ? {x:event.clientX,y:event.clientY,angle:accountRotation.angle,pointerId:event.pointerId,moved:false}
+            : null;
+        if (accountDragStart) character.setPointerCapture(event.pointerId);
+    });
+    els.accountCarousel.addEventListener('pointermove',event=>{
+        if (!accountDragStart || event.pointerId!==accountDragStart.pointerId) return;
+        const distance=event.clientX-accountDragStart.x;
+        if (Math.abs(distance)>5) accountDragStart.moved=true;
+        if (!accountDragStart.moved) return;
+        accountRotation.angle=accountDragStart.angle+distance*.012;
+        if (!accountRotation.frame) accountRotation.frame=requestAnimationFrame(drawAccountRotation);
     });
     els.accountCarousel.addEventListener('pointerup',event=>{
-        if (accountDragStart && Math.hypot(event.clientX-accountDragStart.x,event.clientY-accountDragStart.y)>5) {
+        if (accountDragStart?.moved && event.pointerId===accountDragStart.pointerId) {
             suppressAccountClickUntil=Date.now()+300;
         }
         accountDragStart=null;
     });
+    els.accountCarousel.addEventListener('pointercancel',()=>{accountDragStart=null;});
     els.accountCarousel.addEventListener('click',event=>{
         if (event.detail && Date.now()<suppressAccountClickUntil) return;
         const character=event.target.closest('.account-character');
         if (character) {
             const index=Number(character.dataset.index);
             if(index===state.accountCarouselIndex) setProfile(state.accounts[index].name);
-            else { state.accountCarouselIndex=index; renderAccountCarousel(); }
+            else { stopAccountRotation(); state.accountCarouselIndex=index; renderAccountCarousel(); }
         }
     });
     els.accountRoster.addEventListener('click',event=>{
         const chip=event.target.closest('.roster-chip');
         if (chip) {
+            stopAccountRotation();
             state.accountCarouselIndex=Number(chip.dataset.index);
             renderAccountCarousel();
         }
