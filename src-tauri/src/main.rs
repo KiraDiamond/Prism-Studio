@@ -4,6 +4,7 @@ mod skins;
 mod preferences;
 mod skin_upload;
 mod capes;
+mod wynntils;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use bridge::{Settings,Library,Mod};
 use std::{fs,path::PathBuf};
@@ -93,7 +94,7 @@ fn main() {
         let _=fs::write(output,serde_json::to_vec(&result).unwrap());return;
     }
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![library,get_settings,save_connection,launch,open_prism,mods,open_folder,open_wynntils_capes,prepare_wynntils_cape,capes::list_capes,capes::add_cape,capes::rename_cape,capes::remove_cape,check_updates,skin_upload::apply_skin,skins::read_skin_library,skins::save_skin_library,skins::process_and_save_texture,skins::read_skin_textures_batched,skins::backup_legacy_skin_packs,skins::read_legacy_skin_packs,preferences::get_instance_library_view,preferences::set_instance_library_view])
+        .invoke_handler(tauri::generate_handler![library,get_settings,save_connection,launch,open_prism,mods,open_folder,open_wynntils_capes,prepare_wynntils_cape,wynntils::open_wynntils_window,wynntils::apply_wynntils_cape,capes::list_capes,capes::add_cape,capes::rename_cape,capes::remove_cape,check_updates,skin_upload::apply_skin,skins::read_skin_library,skins::save_skin_library,skins::process_and_save_texture,skins::read_skin_textures_batched,skins::backup_legacy_skin_packs,skins::read_legacy_skin_packs,preferences::get_instance_library_view,preferences::set_instance_library_view])
         .run(tauri::generate_context!()).expect("Prism Studio could not start");
 }
 

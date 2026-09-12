@@ -91,20 +91,9 @@ async function applySavedCape() {
     const button=document.getElementById('btn-apply-cape');
     button.disabled=true;
     try {
-        const path=await invoke('prepare_wynntils_cape',{base64Data:cape.texture});
-        els.wynntilsCapeFile.value='';
-        if (wynntilsCapePreviewUrl) URL.revokeObjectURL(wynntilsCapePreviewUrl);
-        wynntilsCapePreviewUrl=null;
-        els.wynntilsCapePreview.src=cape.texture;
-        els.wynntilsCapePreview.hidden=false;
-        els.wynntilsCapeAccount.textContent=`${cape.name} for ${cape.account}`;
-        els.wynntilsCapePath.value=path;
-        els.wynntilsCapeHandoff.hidden=false;
-        els.wynntilsCapeStatus.textContent='On Wynntils, press Choose PNG, paste this path into the file picker, check the preview, then press Save.';
-        try { await navigator.clipboard.writeText(path); } catch { /* Path is visible below. */ }
-        els.wynntilsCapeDialog.showModal();
-        await invoke('open_wynntils_capes');
-    } catch(error) { showToast('Could not prepare cape: '+String(error),'error'); }
+        await invoke('apply_wynntils_cape',{account:cape.account,base64Data:cape.texture});
+        showToast(`Wynntils is opening for ${cape.account}. Sign in there if needed; the cape will be applied when your account page loads.`,'success');
+    } catch(error) { showToast('Could not open Wynntils cape: '+String(error),'error'); }
     finally { button.disabled=false; }
 }
 
