@@ -92,9 +92,9 @@ function clearTurnableViewer(slot) {
 }
 
 async function showTurnableViewer(slot, host, texture, model, width, height, label, capeTexture=null) {
-    clearTurnableViewer(slot);
     host.querySelector('.turnable-skin-canvas')?.remove();
     host.classList.remove('has-turnable-skin');
+    clearTurnableViewer(slot);
     if (!texture) return;
     const version=turnableVersions[slot];
     let viewer;
@@ -103,6 +103,7 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
         if (turnableVersions[slot]!==version || !host.isConnected) return;
         const canvas=document.createElement('canvas');
         canvas.className='turnable-skin-canvas';
+        canvas.style.opacity='0';
         viewer=new SkinViewer({canvas,width,height,pixelRatio:1,zoom:.9,fov:35,enableControls:true,renderPaused:true,preserveDrawingBuffer:true});
         turnableViewers[slot]=viewer;
         viewer.controls.enableZoom=false;
@@ -128,15 +129,18 @@ async function showTurnableViewer(slot, host, texture, model, width, height, lab
             });
         }
         viewer.render();
-        canvas.style.opacity='0';
         host.append(canvas);
         viewer.renderPaused=false;
-        requestAnimationFrame(()=>requestAnimationFrame(()=>{
-            if (turnableVersions[slot]===version && host.isConnected) {
-                canvas.style.opacity='1';
-                host.classList.add('has-turnable-skin');
-            }
-        }));
+        requestAnimationFrame(()=>{
+            if (turnableVersions[slot]!==version || !host.isConnected) return;
+            viewer.render();
+            requestAnimationFrame(()=>{
+                if (turnableVersions[slot]===version && host.isConnected) {
+                    canvas.style.opacity='1';
+                    host.classList.add('has-turnable-skin');
+                }
+            });
+        });
     } catch(error) {
         if (turnableVersions[slot]===version) {
             console.error('Interactive skin preview failed',error);

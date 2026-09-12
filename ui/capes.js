@@ -24,10 +24,10 @@ function selectedCape() {
 
 function resetCapePreview() {
     capePreviewKey='';
-    clearTurnableViewer('cape');
     const host=document.getElementById('cape-character-preview');
     host.querySelector('.turnable-skin-canvas')?.remove();
     host.classList.remove('has-turnable-skin');
+    clearTurnableViewer('cape');
 }
 
 function updateCapeCharacterPreview(cape) {
