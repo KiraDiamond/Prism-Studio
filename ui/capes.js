@@ -1,6 +1,17 @@
 // Cape PNGs live in the test app's data folder; only the selected tile is a browser preference.
 let capeLibrary=[];
 const selectedCapes=loadJsonPreference('selected_capes_v1',{});
+const wynntilsConnectionStatus={};
+const wynntilsStatusText={
+    checking:'Checking Wynntils login…',
+    login:'Sign in on the Wynntils window. It will hide when this account is connected.',
+    manage:'Wynntils window open. You can sign out and connect a different login here.',
+    wrong_account:'Wynntils is signed in as a different account. Sign out there and use this Minecraft account.',
+    connected:'Wynntils connected. The login window is hidden.',
+    applying:'Applying cape in the background…',
+    applied:'Cape applied on Wynntils.',
+    error:'Wynntils could not apply the cape. Open its login window to check the site.'
+};
 
 function capesForProfile() {
     return capeLibrary.filter(cape=>cape.account.toLowerCase()===state.profile.toLowerCase());
@@ -47,6 +58,8 @@ function renderCapeLibrary() {
     document.getElementById('cape-count').textContent=`${capes.length} ${capes.length===1?'cape':'capes'}`;
     document.getElementById('cape-library-title').textContent=state.profile?`${state.profile}'s capes`:'Your capes';
     document.getElementById('selected-cape-account').textContent=state.profile||'No account';
+    document.getElementById('cape-wynntils-status').textContent=
+        wynntilsStatusText[wynntilsConnectionStatus[key]]||'Wynntils login not checked for this account.';
     const name=document.getElementById('selected-cape-name');
     name.value=selected?.name||'';
     name.disabled=!selected;
@@ -92,13 +105,30 @@ async function applySavedCape() {
     button.disabled=true;
     try {
         await invoke('apply_wynntils_cape',{account:cape.account,base64Data:cape.texture});
-        showToast(`Wynntils is opening for ${cape.account}. Sign in there if needed; the cape will be applied when your account page loads.`,'success');
+        showToast(`Applying ${cape.name} for ${cape.account}. A Wynntils sign-in window will appear if needed.`,'success');
     } catch(error) { showToast('Could not open Wynntils cape: '+String(error),'error'); }
     finally { button.disabled=false; }
 }
 
 function setupCapeEvents() {
+    window.__TAURI__?.event?.listen('wynntils-cape-status',event=>{
+        const {account,status}=event.payload||{};
+        if (!account || !wynntilsStatusText[status]) return;
+        wynntilsConnectionStatus[account.toLowerCase()]=status;
+        if (state.profile.toLowerCase()===account.toLowerCase()) renderCapeLibrary();
+        if (status==='applied') showToast(`Cape applied for ${account}.`,'success');
+        if (status==='error') showToast(`Could not apply cape for ${account}. Check Wynntils login.`,'error');
+    });
     document.getElementById('cape-account-select').addEventListener('change',event=>setProfile(event.target.value));
+    document.getElementById('btn-connect-wynntils').addEventListener('click',async()=>{
+        if (!state.profile) { showToast('Choose a Minecraft account first.','error'); return; }
+        const account=state.profile;
+        try {
+            await invoke('open_wynntils_window',{account});
+            wynntilsConnectionStatus[account.toLowerCase()]='manage';
+            renderCapeLibrary();
+        } catch(error) { showToast('Could not open Wynntils login: '+String(error),'error'); }
+    });
     document.getElementById('btn-add-cape').addEventListener('click',()=>{
         if (!state.profile) { showToast('Choose a Minecraft account first.','error'); return; }
         const input=document.getElementById('cape-file-input');

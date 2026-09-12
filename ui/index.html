@@ -258,6 +258,7 @@
                     <div class="cape-header-actions">
                         <label for="cape-account-select">Account</label>
                         <select id="cape-account-select" aria-label="Minecraft account for capes"></select>
+                        <button id="btn-connect-wynntils" class="btn btn-secondary" type="button">Wynntils login</button>
                         <button id="btn-add-cape" class="btn btn-primary" type="button">+ Add cape</button>
                         <input id="cape-file-input" type="file" accept="image/png,.png" multiple hidden>
                     </div>
@@ -279,7 +280,8 @@
                             <button id="btn-apply-cape" class="btn btn-primary" type="button" disabled>Apply on Wynntils</button>
                             <button id="btn-remove-cape" class="btn btn-secondary" type="button" disabled>Remove</button>
                         </div>
-                        <p class="skin-backend-note">Apply opens Wynntils in the app. Sign in there if needed; your saved cape is uploaded to the matching account automatically.</p>
+                        <p id="cape-wynntils-status" class="skin-backend-note" role="status" aria-live="polite">Wynntils login not checked for this account.</p>
+                        <p class="skin-backend-note">Each Minecraft account has its own Wynntils login. After sign-in, that window hides and cape changes run in the background.</p>
                     </section>
                     <section class="skin-pack-browser">
                         <div class="skin-pack-browser-header">

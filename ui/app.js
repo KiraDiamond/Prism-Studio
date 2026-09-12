@@ -1161,7 +1161,7 @@ function setupUIEvents() {
                 await invoke('apply_wynntils_cape',{account:state.profile,base64Data});
                 els.wynntilsCapeStatus.textContent='Sign in on the Wynntils page if needed. The cape will be applied to the matching account automatically.';
             } else {
-                await invoke('open_wynntils_window');
+                await invoke('open_wynntils_window',{account:state.profile});
             }
         } catch(error) { els.wynntilsCapeStatus.textContent=String(error); }
         finally { button.disabled=false;els.wynntilsCapeFile.disabled=false; }
