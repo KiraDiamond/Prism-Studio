@@ -9,6 +9,8 @@
     "build": "npm run build:ui && tauri build",
     "build:ui": "esbuild skinview-entry.js --bundle --format=esm --minify --outfile=ui/skinview.bundle.js",
     "build:portable": "npm run build:ui && tauri build --no-bundle",
+    "sync:capes": "python scripts/sync_athena_capes.py",
+    "check:capes": "python -m unittest discover -s scripts -p test_*.py",
     "check": "node scripts/check.mjs"
   },
   "devDependencies": {

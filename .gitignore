@@ -1,5 +1,7 @@
 node_modules/
 *.log
+__pycache__/
+*.pyc
 src-tauri/target/
 /Prism Studio.exe
 /Prism Studio Preview.exe

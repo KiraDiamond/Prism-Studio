@@ -13,7 +13,7 @@ async function loadCapeCatalog() {
         const response=await fetch('catalog/capes.json');
         if (!response.ok) throw new Error('Catalog files are unavailable.');
         const data=await response.json();
-        if (!Array.isArray(data.capes) || data.capes.length!==2143) throw new Error('Catalog data is incomplete.');
+        if (!Array.isArray(data.capes) || !data.capes.length) throw new Error('Catalog data is incomplete.');
         capeCatalog.records=data.capes;
         for (const cape of data.capes) {
             const group=catalogGroup(cape);
