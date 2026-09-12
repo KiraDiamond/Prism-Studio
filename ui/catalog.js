@@ -1,5 +1,6 @@
-const capeCatalog = { records:null, filtered:[], selected:null, shown:60, visible:false, loading:null };
+const capeCatalog = { records:null, filtered:[], matchCount:0, groupSizes:new Map(), selected:null, shown:60, visible:false, loading:null };
 const catalogAsset = (folder,sha) => `catalog/${folder}/${sha}.png`;
+const catalogGroup = cape => cape.repeat_of || cape.sha1;
 
 function catalogOption(select,value,label) {
     select.add(new Option(label,value));
@@ -14,6 +15,10 @@ async function loadCapeCatalog() {
         const data=await response.json();
         if (!Array.isArray(data.capes) || data.capes.length!==2143) throw new Error('Catalog data is incomplete.');
         capeCatalog.records=data.capes;
+        for (const cape of data.capes) {
+            const group=catalogGroup(cape);
+            capeCatalog.groupSizes.set(group,(capeCatalog.groupSizes.get(group)||0)+1);
+        }
         const date=new Date(data.generated_at);
         document.getElementById('cape-catalog-source').textContent=
             `${data.capes.length.toLocaleString()} capes · snapshot ${date.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})} · guild links are tentative; creation years are unavailable`;
@@ -63,7 +68,7 @@ function filterCapeCatalog() {
     const terms=value('cape-catalog-search').trim().toLowerCase().split(/\s+/).filter(Boolean);
     const color=value('cape-catalog-color'), shade=value('cape-catalog-shade');
     const size=value('cape-catalog-size'), tag=value('cape-catalog-tag'), guild=value('cape-catalog-guild');
-    capeCatalog.filtered=capeCatalog.records.filter(cape=>{
+    const matches=capeCatalog.records.filter(cape=>{
         if (color && cape.color!==color || shade && cape.shade!==shade || size && cape.resolution!==size) return false;
         if (tag && !cape.tags.includes(tag)) return false;
         if (guild && (guild==='linked' ? !cape.guilds.length : !cape.guilds.some(link=>link.tag===guild))) return false;
@@ -71,6 +76,25 @@ function filterCapeCatalog() {
             ...cape.guilds.flatMap(link=>[link.tag,link.name])].join(' ').toLowerCase();
         return terms.every(term=>searchable.includes(term));
     });
+    capeCatalog.matchCount=matches.length;
+    const repeats=value('cape-catalog-repeats');
+    if (repeats==='hide') {
+        const seen=new Set();
+        capeCatalog.filtered=matches.filter(cape=>{
+            const group=catalogGroup(cape);
+            if (seen.has(group)) return false;
+            seen.add(group);
+            return true;
+        });
+    } else if (repeats==='only') {
+        capeCatalog.filtered=matches.filter(cape=>capeCatalog.groupSizes.get(catalogGroup(cape))>1);
+    } else capeCatalog.filtered=matches;
+    if (capeCatalog.selected && !capeCatalog.filtered.includes(capeCatalog.selected)) {
+        capeCatalog.selected=null;
+        const note=document.createElement('p');
+        note.textContent='Choose a cape to view its colors and tags.';
+        document.getElementById('cape-catalog-detail').replaceChildren(note);
+    }
     capeCatalog.shown=60;
     renderCapeCatalog();
 }
@@ -88,12 +112,17 @@ function renderCapeCatalog() {
         image.src=catalogAsset('back',cape.sha1);
         image.alt=''; image.loading='lazy';
         const title=document.createElement('strong'); title.textContent=cape.id;
-        const subtitle=document.createElement('span'); subtitle.textContent=`${cape.color} · ${cape.resolution}`;
+        const copies=capeCatalog.groupSizes.get(catalogGroup(cape));
+        const subtitle=document.createElement('span'); subtitle.textContent=`${cape.color} · ${cape.resolution}${copies>1?' · '+copies+' alike':''}`;
+        card.title=copies>1?`${copies} entries have this or a very similar front/back preview`:'';
         card.append(image,title,subtitle);
         grid.append(card);
     }
     const count=capeCatalog.filtered.length;
-    document.getElementById('cape-catalog-count').textContent=`${count.toLocaleString()} ${count===1?'cape':'capes'}`;
+    const repeatMode=document.getElementById('cape-catalog-repeats').value;
+    document.getElementById('cape-catalog-count').textContent=repeatMode==='hide'
+        ? `${count.toLocaleString()} designs from ${capeCatalog.matchCount.toLocaleString()} capes`
+        : `${count.toLocaleString()} ${count===1?'cape':'capes'}`;
     document.getElementById('cape-catalog-empty').hidden=count!==0;
     const more=document.getElementById('cape-catalog-more');
     more.hidden=capeCatalog.shown>=count;
@@ -121,6 +150,12 @@ function showCapeCatalogDetail(cape) {
     }
     const tags=document.createElement('p'); tags.className='cape-catalog-tags'; tags.textContent=`Tags: ${cape.tags.join(', ')}`;
     detail.append(heading,title,preview,facts,id,palette,tags);
+    const copies=capeCatalog.groupSizes.get(catalogGroup(cape));
+    if (copies>1) {
+        const note=document.createElement('p');
+        note.textContent=`${copies} entries share this or a very similar front/back preview. Choose “Show all” to see each entry.`;
+        detail.append(note);
+    }
     if (cape.guilds.length) {
         const guild=document.createElement('p');
         guild.textContent=`Possible guild: ${cape.guilds.map(link=>`${link.tag} · ${link.name} (${link.confidence.toLowerCase()} confidence)`).join(', ')}. Not verified ownership.`;
@@ -157,13 +192,14 @@ async function saveCatalogCape(cape,button) {
     }
 }
 
-for (const id of ['cape-catalog-search','cape-catalog-color','cape-catalog-shade','cape-catalog-size','cape-catalog-tag','cape-catalog-guild']) {
+for (const id of ['cape-catalog-search','cape-catalog-color','cape-catalog-shade','cape-catalog-size','cape-catalog-tag','cape-catalog-guild','cape-catalog-repeats']) {
     document.getElementById(id).addEventListener(id==='cape-catalog-search'?'input':'change',filterCapeCatalog);
 }
 document.getElementById('cape-catalog-clear').addEventListener('click',()=>{
     for (const id of ['cape-catalog-search','cape-catalog-color','cape-catalog-shade','cape-catalog-size','cape-catalog-tag','cape-catalog-guild']) {
         document.getElementById(id).value='';
     }
+    document.getElementById('cape-catalog-repeats').value='all';
     filterCapeCatalog();
 });
 document.getElementById('cape-catalog-grid').addEventListener('click',event=>{
