@@ -61,6 +61,16 @@ async fn open_folder(id:String)->Result<(),String> {
         std::thread::spawn(move||{let _=child.wait();});Ok(())
     }).await.map_err(|e|e.to_string())?
 }
+#[tauri::command]
+async fn open_wynntils_capes()->Result<(),String> {
+    tauri::async_runtime::spawn_blocking(||{
+        std::process::Command::new("explorer.exe")
+            .arg("https://account.wynntils.com/")
+            .spawn()
+            .map_err(|e|e.to_string())?;
+        Ok(())
+    }).await.map_err(|e|e.to_string())?
+}
 fn main() {
     // Diagnostic mode uses the exact production reader and never includes authentication tokens.
     if let Some(output)=std::env::args().skip_while(|a|a!="--diagnose").nth(1) {
@@ -68,7 +78,7 @@ fn main() {
         let _=fs::write(output,serde_json::to_vec(&result).unwrap());return;
     }
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![library,get_settings,save_connection,launch,open_prism,mods,open_folder,check_updates,skin_upload::apply_skin,skins::read_skin_library,skins::save_skin_library,skins::process_and_save_texture,skins::read_skin_textures_batched,skins::backup_legacy_skin_packs,skins::read_legacy_skin_packs,preferences::get_instance_library_view,preferences::set_instance_library_view])
+        .invoke_handler(tauri::generate_handler![library,get_settings,save_connection,launch,open_prism,mods,open_folder,open_wynntils_capes,check_updates,skin_upload::apply_skin,skins::read_skin_library,skins::save_skin_library,skins::process_and_save_texture,skins::read_skin_textures_batched,skins::backup_legacy_skin_packs,skins::read_legacy_skin_packs,preferences::get_instance_library_view,preferences::set_instance_library_view])
         .run(tauri::generate_context!()).expect("Prism Studio could not start");
 }
 

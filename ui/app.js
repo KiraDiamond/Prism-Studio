@@ -248,6 +248,9 @@ const els = {
     toastContainer: document.getElementById('toast-container'),
 
     btnOpenPrismAccounts: document.getElementById('btn-open-prism-accounts'),
+    btnWynntilsCape: document.getElementById('btn-wynntils-cape'),
+    wynntilsCapeDialog: document.getElementById('wynntils-cape-dialog'),
+    wynntilsCapeAccount: document.getElementById('wynntils-cape-account'),
     btnAddAccount: document.getElementById('btn-add-account'),
     btnRefreshAccounts: document.getElementById('btn-refresh-accounts'),
     addAccountDialog: document.getElementById('add-account-dialog'),
@@ -1096,6 +1099,20 @@ function setupUIEvents() {
     els.headerAccountSelect.addEventListener('change',event=>setProfile(event.target.value));
     els.btnOpenPrismAccounts.addEventListener('click',()=>openPrism(null));
     els.btnRefreshAccounts.addEventListener('click',()=>fetchLibrary(true));
+    els.btnWynntilsCape.addEventListener('click',()=>{
+        const account=state.accounts[state.accountCarouselIndex];
+        els.wynntilsCapeAccount.textContent=account
+            ? `For ${account.name}. Sign in on Wynntils with this Minecraft username.`
+            : 'Choose a Minecraft account here after connecting it in Prism.';
+        els.wynntilsCapeDialog.showModal();
+    });
+    document.getElementById('btn-close-wynntils-cape').addEventListener('click',()=>els.wynntilsCapeDialog.close());
+    document.getElementById('btn-open-wynntils-capes').addEventListener('click',async()=>{
+        try {
+            await invoke('open_wynntils_capes');
+            els.wynntilsCapeDialog.close();
+        } catch(error) { showToast(`Could not open Wynntils: ${String(error)}`,'error'); }
+    });
     els.btnAddAccount.addEventListener('click',()=>els.addAccountDialog.showModal());
     document.getElementById('btn-close-add-account').addEventListener('click',()=>els.addAccountDialog.close());
     document.getElementById('btn-launch-account-setup').addEventListener('click',async()=>{

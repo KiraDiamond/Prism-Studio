@@ -126,6 +126,7 @@
                     <div class="account-header-actions">
                         <button id="btn-add-account" class="btn btn-primary" type="button">+ Add account</button>
                         <button id="btn-refresh-accounts" class="btn btn-secondary" type="button">Refresh accounts</button>
+                        <button id="btn-wynntils-cape" class="btn btn-secondary" type="button">Choose Wynntils cape</button>
                         <button id="btn-open-prism-accounts" class="btn btn-secondary" type="button">Manage in Prism</button>
                     </div>
                 </header>
@@ -364,6 +365,19 @@
                 <button id="btn-launch-account-setup" class="btn btn-primary" type="button">Open Prism</button>
             </div>
             <p>After adding your account, return here and choose Refresh accounts.</p>
+        </div>
+    </dialog>
+
+    <dialog id="wynntils-cape-dialog" class="studio-dialog" aria-labelledby="wynntils-cape-title">
+        <div class="add-account-content">
+            <div class="dialog-eyebrow">WYNNTILS COSMETICS</div>
+            <h3 id="wynntils-cape-title">Choose a cape</h3>
+            <p id="wynntils-cape-account"></p>
+            <p>Wynntils keeps cape choices on its account site. If you have not connected this Minecraft account yet, run <code>/wynntils token</code> on Wynncraft and follow the link in chat. Sign in with your Wynntils password, then choose a cape or elytra from its library.</p>
+            <div class="dialog-actions">
+                <button id="btn-close-wynntils-cape" class="btn btn-secondary" type="button">Close</button>
+                <button id="btn-open-wynntils-capes" class="btn btn-primary" type="button">Open cape library</button>
+            </div>
         </div>
     </dialog>
     <dialog id="apply-skin-dialog" class="studio-dialog" aria-labelledby="apply-skin-title">
