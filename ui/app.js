@@ -326,6 +326,7 @@ const els = {
 
 async function init() {
     setupUIEvents();
+    setupCapeEvents();
     await loadInstanceLibraryView();
     applyStoredPreferences();
     ensureActiveSkinPack();
@@ -342,6 +343,7 @@ async function init() {
 
     await initSkinStorage();
     await fetchLibrary();
+    await initCapeLibrary();
     renderSkinPacks();
 }
 
@@ -423,6 +425,7 @@ function processLibraryData(data) {
     renderHeaderAccounts();
     syncAccountCarouselToProfile();
     renderAccountCarousel();
+    renderCapeLibrary();
     renderLibrary();
 
     if (state.selectedId) {
@@ -1041,6 +1044,7 @@ function showView(viewName) {
 
     if (viewName==='accounts') renderAccountCarousel();
     if (viewName==='skins') renderSkinPacks();
+    if (viewName==='capes') renderCapeLibrary();
 }
 
 function setFilter(filter,syncNavigation=true) {
@@ -1061,6 +1065,7 @@ function setProfile(profileName) {
     renderHeaderAccounts();
     syncAccountCarouselToProfile();
     renderAccountCarousel();
+    renderCapeLibrary();
 }
 
 async function openPrism(id=null) {
@@ -1120,10 +1125,8 @@ function setupUIEvents() {
     els.btnRefreshAccounts.addEventListener('click',()=>fetchLibrary(true));
     els.btnWynntilsCape.addEventListener('click',()=>{
         const account=state.accounts[state.accountCarouselIndex];
-        els.wynntilsCapeAccount.textContent=account
-            ? `For ${account.name}. Sign in on Wynntils with this Minecraft username.`
-            : 'Choose a Minecraft account here after connecting it in Prism.';
-        els.wynntilsCapeDialog.showModal();
+        if (account && account.name!==state.profile) setProfile(account.name);
+        showView('capes');
     });
     els.wynntilsCapeFile.addEventListener('change',()=>{
         if (wynntilsCapePreviewUrl) URL.revokeObjectURL(wynntilsCapePreviewUrl);

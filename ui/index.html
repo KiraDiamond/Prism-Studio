@@ -42,6 +42,10 @@
                     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8.5 3 12 5l3.5-2L20 6v4l-2 1v10H6V11l-2-1V6l4.5-3ZM8 7.18 6 8v.76l2 1V19h8v-9.24l2-1V8l-2-.82L12 9 8 7.18Z"/></svg>
                     <span>Skins</span>
                 </button></li>
+                <li><button class="nav-item" data-view="capes">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M6 2h12v3l-2 2v14l-4-2-4 2V7L6 5V2Zm2 2v.2l2 2V18l2-1 2 1V6.2l2-2V4H8Z"/></svg>
+                    <span>Capes</span>
+                </button></li>
                 <li><button class="nav-item" data-view="settings">
                     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M10.33 2h3.34l.62 2.18c.48.2.94.46 1.36.76l2.18-.62 1.67 2.89-1.56 1.63c.06.38.09.77.09 1.16s-.03.78-.09 1.16l1.56 1.63-1.67 2.89-2.18-.62c-.42.3-.88.56-1.36.76L13.67 18h-3.34l-.62-2.18a7.36 7.36 0 0 1-1.36-.76l-2.18.62-1.67-2.89 1.56-1.63A7.4 7.4 0 0 1 6 10c0-.39.03-.78.09-1.16L4.53 7.21 6.2 4.32l2.18.62c.42-.3.88-.56 1.36-.76L10.33 2ZM12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
                     <span>Settings</span>
@@ -243,6 +247,54 @@
                 </div>
             </div>
 
+            <!-- CAPES -->
+            <div id="view-capes" class="view">
+                <header class="top-header skins-header">
+                    <div class="header-titles">
+                        <div class="eyebrow">WYNNTILS COSMETICS</div>
+                        <h2>Capes</h2>
+                        <span>Keep your cape PNGs ready for each Minecraft account</span>
+                    </div>
+                    <div class="cape-header-actions">
+                        <label for="cape-account-select">Account</label>
+                        <select id="cape-account-select" aria-label="Minecraft account for capes"></select>
+                        <button id="btn-add-cape" class="btn btn-primary" type="button">+ Add cape</button>
+                        <input id="cape-file-input" type="file" accept="image/png,.png" multiple hidden>
+                    </div>
+                </header>
+                <div class="skins-workspace cape-workspace">
+                    <section class="skin-feature-panel">
+                        <div class="skin-feature-top">
+                            <div>
+                                <div class="section-kicker">SELECTED CAPE</div>
+                                <input id="selected-cape-name" class="skin-name-input" aria-label="Cape name" placeholder="Choose a cape" maxlength="60" autocomplete="off" disabled>
+                            </div>
+                            <span id="selected-cape-account" class="muted-badge">No account</span>
+                        </div>
+                        <div class="skin-preview-stage cape-preview-stage">
+                            <img id="selected-cape-image" alt="Selected cape PNG" hidden>
+                            <span id="cape-preview-placeholder">Choose a cape to preview</span>
+                        </div>
+                        <div class="skin-feature-actions">
+                            <button id="btn-apply-cape" class="btn btn-primary" type="button" disabled>Apply on Wynntils</button>
+                            <button id="btn-remove-cape" class="btn btn-secondary" type="button" disabled>Remove</button>
+                        </div>
+                        <p class="skin-backend-note">Apply prepares your PNG and opens Wynntils. Choose PNG there, check the preview, then press Save.</p>
+                    </section>
+                    <section class="skin-pack-browser">
+                        <div class="skin-pack-browser-header">
+                            <div><div class="section-kicker">SAVED CAPES</div><h3 id="cape-library-title">Your capes</h3></div>
+                            <span id="cape-count" class="skin-count-label">0 capes</span>
+                        </div>
+                        <div id="cape-grid" class="skin-grid cape-grid"></div>
+                        <div id="cape-empty" class="skin-pack-empty">
+                            <strong>No capes saved for this account</strong>
+                            <span>Add a PNG cape to keep it here.</span>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
             <!-- SETTINGS -->
             <div id="view-settings" class="view">
                 <header class="top-header page-only-header">
@@ -417,5 +469,6 @@
     <script src="app.js"></script>
     <script src="skin-library.js"></script>
     <script src="skin-packs.js"></script>
+    <script src="capes.js"></script>
 </body>
 </html>
