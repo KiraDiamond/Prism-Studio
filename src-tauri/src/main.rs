@@ -6,7 +6,7 @@ mod skin_upload;
 use bridge::{Settings,Library,Mod};
 use std::{fs,path::PathBuf};
 
-fn settings_file()->PathBuf {PathBuf::from(std::env::var_os("APPDATA").unwrap_or_default()).join("PrismStudio/connection.json")}
+fn settings_file()->PathBuf {PathBuf::from(std::env::var_os("APPDATA").unwrap_or_default()).join("PrismStudioTest/connection.json")}
 fn settings()->Settings {fs::read(settings_file()).ok().and_then(|data|serde_json::from_slice(&data).ok()).unwrap_or_default()}
 
 #[tauri::command]

@@ -35,10 +35,10 @@ pub struct StoredSkin {
     pub texture_id: String,
 }
 
-// Ensures we target %APPDATA%\PrismStudio\skins exactly like connection.json
+// Keep test-version skins separate from the original Studio data.
 fn get_skins_dir() -> Result<PathBuf, String> {
     let app_data = std::env::var("APPDATA").map_err(|_| "No APPDATA env var")?;
-    let dir = PathBuf::from(app_data).join("PrismStudio").join("skins");
+    let dir = PathBuf::from(app_data).join("PrismStudioTest").join("skins");
     if !dir.exists() { fs::create_dir_all(&dir).map_err(|e| e.to_string())?; }
     Ok(dir)
 }

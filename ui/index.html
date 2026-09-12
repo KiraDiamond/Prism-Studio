@@ -123,7 +123,11 @@
                         <h2>Accounts</h2>
                         <span>Choose who you're playing as</span>
                     </div>
-                    <button id="btn-open-prism-accounts" class="btn btn-secondary">Manage in Prism</button>
+                    <div class="account-header-actions">
+                        <button id="btn-add-account" class="btn btn-primary" type="button">+ Add account</button>
+                        <button id="btn-refresh-accounts" class="btn btn-secondary" type="button">Refresh accounts</button>
+                        <button id="btn-open-prism-accounts" class="btn btn-secondary" type="button">Manage in Prism</button>
+                    </div>
                 </header>
 
                 <section class="character-select-shell">
@@ -273,7 +277,7 @@
                         <button id="btn-save-connection" class="btn btn-primary">Save & reconnect</button>
                     </section>
 
-                    <section class="settings-panel"><div class="section-kicker">Updates</div><h3>Prism Studio</h3><p>Check GitHub for a newer version. Your settings and packs are preserved.</p><button id="btn-check-updates" class="btn btn-secondary" type="button">Check for updates</button></section>
+                    <section class="settings-panel"><div class="section-kicker">Updates</div><h3>Prism Studio Test</h3><p>This test version does not install updates to the original app.</p><button id="btn-check-updates" class="btn btn-secondary" type="button" disabled>Updates unavailable in test version</button></section>
                     <aside class="settings-side-panel">
                         <div class="section-kicker">HOW IT WORKS</div>
                         <h3>Studio on top. Prism underneath.</h3>
@@ -343,7 +347,24 @@
         </aside>
     </div>
 
-    <!-- Create pack modal -->
+    <!-- Dialogs -->
+    <dialog id="add-account-dialog" class="studio-dialog" aria-labelledby="add-account-title">
+        <div class="add-account-content">
+            <div class="dialog-eyebrow">PLAYER PROFILES</div>
+            <h3 id="add-account-title">Add an account</h3>
+            <p>Prism securely handles account sign-in. Choose the account type, then add it in Prism.</p>
+            <div class="account-type-tabs" role="tablist" aria-label="Account type">
+                <button id="account-type-microsoft" class="account-type-tab active" type="button" role="tab" aria-selected="true" aria-controls="account-type-panel" data-account-type="microsoft">Microsoft</button>
+                <button id="account-type-offline" class="account-type-tab" type="button" role="tab" aria-selected="false" aria-controls="account-type-panel" data-account-type="offline">Offline</button>
+            </div>
+            <p id="account-type-panel" role="tabpanel">In Prism, open Accounts, choose Add Microsoft, then complete sign-in.</p>
+            <div class="dialog-actions">
+                <button id="btn-close-add-account" class="btn btn-secondary" type="button">Cancel</button>
+                <button id="btn-launch-account-setup" class="btn btn-primary" type="button">Open Prism</button>
+            </div>
+            <p>After adding your account, return here and choose Refresh accounts.</p>
+        </div>
+    </dialog>
     <dialog id="apply-skin-dialog" class="studio-dialog" aria-labelledby="apply-skin-title">
         <form id="apply-skin-form" method="dialog">
             <h3 id="apply-skin-title">Apply skin to Minecraft</h3>

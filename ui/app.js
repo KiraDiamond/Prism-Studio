@@ -110,6 +110,10 @@ const els = {
     toastContainer: document.getElementById('toast-container'),
 
     btnOpenPrismAccounts: document.getElementById('btn-open-prism-accounts'),
+    btnAddAccount: document.getElementById('btn-add-account'),
+    btnRefreshAccounts: document.getElementById('btn-refresh-accounts'),
+    addAccountDialog: document.getElementById('add-account-dialog'),
+    accountTypePanel: document.getElementById('account-type-panel'),
     accountCarousel: document.getElementById('account-carousel'),
     accountNameplate: document.getElementById('account-nameplate'),
     accountRoster: document.getElementById('account-roster'),
@@ -620,7 +624,7 @@ function renderAccountCarousel() {
     els.accountRoster.replaceChildren();
 
     if (!state.accounts.length) {
-        els.accountNameplate.innerHTML='<h3>No accounts found</h3><div class="account-nameplate-tags"><span class="nameplate-tag">Manage accounts in Prism</span></div>';
+        els.accountNameplate.innerHTML='<h3>No accounts found</h3><div class="account-nameplate-tags"><span class="nameplate-tag">Use Add account to get started</span></div>';
         els.accountPrev.disabled=true; els.accountNext.disabled=true;
         return;
     }
@@ -647,7 +651,8 @@ function renderAccountCarousel() {
         chip.type='button';
         chip.className=`roster-chip ${index===state.accountCarouselIndex?'active':''}`;
         chip.dataset.index=String(index);
-        const face=skinHeads.get(account.name);chip.innerHTML=face?'<img src="'+face+'" alt="">':'';
+        const face=skinHeads.get(account.name);
+        chip.innerHTML=(face?'<img src="'+face+'" alt="">':'<span class="roster-fallback">'+escapeHTML(initials(account.name))+'</span>')+'<span class="roster-name">'+escapeHTML(account.name)+'</span>';
         chip.setAttribute('aria-label','Select '+account.name);chip.setAttribute('aria-pressed',String(account.name===state.profile));
         chip.title=account.name;
         els.accountRoster.appendChild(chip);
@@ -853,8 +858,8 @@ function setProfile(profileName) {
 }
 
 async function openPrism(id=null) {
-    try { await invoke('open_prism',{id}); }
-    catch (error) { showToast(`Failed to open Prism: ${String(error)}`,'error'); }
+    try { await invoke('open_prism',{id}); return true; }
+    catch (error) { showToast(`Failed to open Prism: ${String(error)}`,'error'); return false; }
 }
 
 /* ---------------- Events ---------------- */
@@ -906,6 +911,23 @@ function setupUIEvents() {
 
     els.headerAccountSelect.addEventListener('change',event=>setProfile(event.target.value));
     els.btnOpenPrismAccounts.addEventListener('click',()=>openPrism(null));
+    els.btnRefreshAccounts.addEventListener('click',()=>fetchLibrary(true));
+    els.btnAddAccount.addEventListener('click',()=>els.addAccountDialog.showModal());
+    document.getElementById('btn-close-add-account').addEventListener('click',()=>els.addAccountDialog.close());
+    document.getElementById('btn-launch-account-setup').addEventListener('click',async()=>{
+        if (await openPrism(null)) els.addAccountDialog.close();
+    });
+    document.querySelectorAll('[data-account-type]').forEach(tab=>tab.addEventListener('click',()=>{
+        const offline=tab.dataset.accountType==='offline';
+        document.querySelectorAll('[data-account-type]').forEach(item=>{
+            const selected=item===tab;
+            item.classList.toggle('active',selected);
+            item.setAttribute('aria-selected',String(selected));
+        });
+        els.accountTypePanel.textContent=offline
+            ? 'In Prism, open Accounts, choose Add Offline, then enter the username you want to use.'
+            : 'In Prism, open Accounts, choose Add Microsoft, then complete sign-in.';
+    }));
 
     els.accountPrev.addEventListener('click',()=>moveAccountCarousel(-1));
     els.accountNext.addEventListener('click',()=>moveAccountCarousel(1));
