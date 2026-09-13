@@ -147,7 +147,7 @@ function showCapeCatalogDetail(cape) {
     preview.className=cape.coverage===0?'cape-catalog-no-preview cape-catalog-large':'cape-catalog-large';
     if (cape.coverage===0) preview.textContent='Transparent back';
     else { preview.src=catalogAsset('back',cape.sha1); preview.alt=`Back of cape ${cape.id}`; }
-    const facts=document.createElement('p'); facts.textContent=`${cape.resolution} · ${cape.color} · ${cape.shade} · ${Math.round(cape.coverage)}% back coverage`;
+    const facts=document.createElement('p'); facts.textContent=`${cape.resolution} · ${cape.color} · ${cape.shade} · ${Math.round(cape.coverage)}% back coverage${cape.source_format==='GIF'?' · GIF source':''}`;
     const id=document.createElement('p'); id.className='cape-catalog-hash'; id.textContent=`SHA-1 ${cape.sha1}`;
     const palette=document.createElement('div'); palette.className='cape-catalog-palette';
     for (const item of cape.palette.slice(0,6)) {
@@ -169,6 +169,14 @@ function showCapeCatalogDetail(cape) {
         const guild=document.createElement('p');
         guild.textContent=`Possible guild: ${cape.guilds.map(link=>`${link.tag} · ${link.name} (${link.confidence.toLowerCase()} confidence)`).join(', ')}. Not verified ownership.`;
         detail.append(guild);
+    }
+    if (cape.source_format==='GIF' || cape.saveable===false) {
+        const note=document.createElement('p');
+        note.textContent=cape.source_format==='GIF'
+            ? 'Athena serves this cape as an animated GIF. This is a first-frame preview; saving it as a PNG cape is unavailable.'
+            : 'This cape PNG exceeds the app’s 500 KB save limit. It remains available to view in the catalog.';
+        detail.append(note);
+        return;
     }
     const button=document.createElement('button');
     button.type='button'; button.className='btn btn-primary'; button.textContent='Save to my capes';

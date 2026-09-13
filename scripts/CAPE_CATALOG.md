@@ -7,6 +7,10 @@ details stay intact. New entries receive a stable `ATH-` display ID, a back
 preview, resolution, color, shade, visible-back coverage, repeat grouping,
 and searchable tags. Athena currently supplies only SHA, dimensions, and an
 animated flag; years, ownership, guilds, and names are not inferred.
+Animated PNG sheets use their first frame for the catalog preview. Athena also
+serves two GIFs despite marking them non-animated; they get first-frame previews
+and a `gif-source` tag. GIFs and PNGs above the app's 500 KB save limit remain
+browsable but cannot be saved to My capes.
 
 For an already downloaded export, run:
 

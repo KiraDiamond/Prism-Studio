@@ -57,9 +57,11 @@ def load_list(path):
 
 def face(texture, x):
     width, height = texture.size
-    if width * 1 != height * 2 or width % 64:
+    frame_height = width // 2
+    if width % 64 or height < frame_height or height % frame_height:
         raise ValueError(f"Unsupported cape dimensions: {width}x{height}")
     scale = width // 64
+    # Animated capes stack standard cape frames vertically; preview frame one.
     return texture.crop((x * scale, scale, (x + 10) * scale, 17 * scale)).resize(
         (80, 128), Image.Resampling.NEAREST
     )
@@ -142,28 +144,31 @@ def validated_texture(content, item):
     if not isinstance(sha, str) or len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
         raise ValueError(f"Invalid Athena identifier: {sha}")
     image = Image.open(BytesIO(content))
-    if image.format != "PNG" or image.size != (item["width"], item["height"]):
-        raise ValueError(f"PNG format or dimensions mismatch for {sha}")
-    return image.convert("RGBA")
+    if image.format not in ("PNG", "GIF") or image.size != (item["width"], item["height"]):
+        raise ValueError(f"Image format or dimensions mismatch for {sha}")
+    return image.convert("RGBA"), image.format, getattr(image, "n_frames", 1)
 
 
 def raw_texture(item, image_dir):
     sha = item["sha"]
     target = CATALOG / "raw" / f"{sha}.png"
-    if target.exists():
-        content = target.read_bytes()
-    elif image_dir and (image_dir / f"{sha}.png").exists():
+    if image_dir and (image_dir / f"{sha}.png").exists():
         content = (image_dir / f"{sha}.png").read_bytes()
+    elif target.exists():
+        content = target.read_bytes()
     elif image_dir:
         raise FileNotFoundError(f"Missing downloaded image {sha}")
     else:
         time.sleep(0.3)
         content = request_bytes(IMAGE_URL + sha)
-    image = validated_texture(content, item)
+    image, source_format, frames = validated_texture(content, item)
     if not target.exists():
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(content)
-    return image
+        if source_format == "PNG":
+            target.write_bytes(content)
+        else:
+            image.save(target, format="PNG")  # Preview only; preserve GIF source in the export.
+    return image, source_format, frames
 
 
 def index_existing(records):
@@ -200,16 +205,29 @@ def main():
         if sha in by_sha:
             if item["animated"] and "animated" not in by_sha[sha]["tags"]:
                 by_sha[sha]["tags"].append("animated")
-            by_sha[sha]["animated"] = bool(item["animated"])
+            by_sha[sha]["animated"] = bool(item["animated"] or by_sha[sha].get("source_format") == "GIF")
+            raw_size = (CATALOG / "raw" / f"{sha}.png").stat().st_size
+            if by_sha[sha].get("source_format") == "GIF":
+                by_sha[sha]["saveable"] = False
+            if raw_size > 500 * 1024:
+                by_sha[sha]["saveable"] = False
+                if "large-file" not in by_sha[sha]["tags"]:
+                    by_sha[sha]["tags"].append("large-file")
             continue
-        texture = raw_texture(item, args.image_dir)
+        texture, source_format, frames = raw_texture(item, args.image_dir)
         back, front = face(texture, 1), face(texture, 12)
         palette, coverage = palette_and_coverage(back)
         color, shade = classify(texture, back, palette)
         size = f'{item["width"]}x{item["height"]}'
         tags = [size, color.lower(), shade.lower().replace(" ", "-")]
-        if item["animated"]:
+        animated = bool(item["animated"] or frames > 1)
+        if animated:
             tags.append("animated")
+        if source_format == "GIF":
+            tags.append("gif-source")
+        raw_size = (CATALOG / "raw" / f"{sha}.png").stat().st_size
+        if raw_size > 500 * 1024:
+            tags.append("large-file")
         if coverage == 0:
             tags.append("transparent-back")
         back_path = CATALOG / "back" / f"{sha}.png"
@@ -236,7 +254,8 @@ def main():
         record = {"sha1": sha, "id": "ATH-" + sha[:12].upper(), "resolution": size,
                   "color": color, "shade": shade, "palette": palette, "coverage": coverage,
                   "guilds": [], "tags": tags, "repeat_of": repeat_of if repeat_of != sha else None,
-                  "animated": bool(item["animated"])}
+                  "animated": animated, "source_format": source_format,
+                  "saveable": source_format == "PNG" and raw_size <= 500 * 1024}
         existing.append(record)
         by_sha[sha] = record
         added += 1
