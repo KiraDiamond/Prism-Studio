@@ -23,3 +23,18 @@ from its packaged files. Rebuild the test app after a sync to ship the new
 catalog. Re-running the sync adds only unseen Athena IDs, so manual edits to
 existing records are preserved. Automatic color and similarity labels are a
 starting point for review, not verified cape descriptions.
+
+## Reviewing guild lettering
+
+`npm run scan:guild -- SHA` processes **one specified cape**. It separates
+dark, light, and quantized color layers from the back's bottom strip, enlarges
+them without blur, and asks Tesseract.js for short text candidates. For a tag
+elsewhere, pass `--region x,y,width,height` in source back-panel pixels.
+The scan only prints suggestions; it never assigns a guild on its own. Tiny
+pixel fonts can misread letters even at high OCR confidence.
+
+After checking the cape visually, run `npm run scan:guild -- SHA --confirm Nia`
+to resolve the prefix through Wynncraft's current guild API and save a
+tentative guild link. This does not prove cape ownership. The catalog's Guild
+filter and detail view then use that reviewed link. The sync command preserves
+reviewed links and tags on subsequent runs. Scanning has no bulk mode.

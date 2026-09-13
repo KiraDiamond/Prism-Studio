@@ -167,7 +167,9 @@ function showCapeCatalogDetail(cape) {
     }
     if (cape.guilds.length) {
         const guild=document.createElement('p');
-        guild.textContent=`Possible guild: ${cape.guilds.map(link=>`${link.tag} · ${link.name} (${link.confidence.toLowerCase()} confidence)`).join(', ')}. Not verified ownership.`;
+        guild.textContent=cape.guilds.some(link=>link.status==='text-reviewed')
+            ? `Reviewed lettering: ${cape.guilds.map(link=>`${link.tag} · ${link.name}`).join(', ')}. This matches a guild prefix, not verified cape ownership.`
+            : `Possible guild: ${cape.guilds.map(link=>`${link.tag} · ${link.name} (${link.confidence.toLowerCase()} confidence)`).join(', ')}. Not verified ownership.`;
         detail.append(guild);
     }
     if (cape.source_format==='GIF' || cape.saveable===false) {
