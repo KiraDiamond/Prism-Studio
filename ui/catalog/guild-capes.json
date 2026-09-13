@@ -1,0 +1,752 @@
+{
+  "version": 1,
+  "notice": "Existing guild links are leads, not verified cape ownership. New links require visual review.",
+  "capes": {
+    "076ef43d44704e59437274d393e58a418556baea": {
+      "guilds": [
+        {
+          "tag": "OUS",
+          "name": "RedLotus",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "0bed68669c3388964c7f67f0b5469e993b7293a5": {
+      "guilds": [
+        {
+          "tag": "Nia",
+          "name": "Nerfuria",
+          "confidence": "High",
+          "status": "text-reviewed"
+        }
+      ]
+    },
+    "1416298deac670117140189bca78641f569ce665": {
+      "guilds": [
+        {
+          "tag": "FOX",
+          "name": "FoxTaleSkeletons",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "1984f4b764563a3ffe51c40b42de565591ff04ff": {
+      "guilds": [
+        {
+          "tag": "LXA",
+          "name": "Lux Nova",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "1a9dc4b4b498a952d80af4c6ff3a600a0414364d": {
+      "guilds": [
+        {
+          "tag": "ERM",
+          "name": "ElongatedMuskrat",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "303b87788f93551dc14ce4af39cb32e4eb3f9ebf": {
+      "guilds": [
+        {
+          "tag": "ADK",
+          "name": "Reil Mercenaries",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "37bed51b67b59cee89827fe1b9a41b40b8687d45": {
+      "guilds": [
+        {
+          "tag": "WFA",
+          "name": "WrathOfTheFallen",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "3c4b0c0b8fed1c0056be70025ab6a67c37ab9ac1": {
+      "guilds": [
+        {
+          "tag": "HAG",
+          "name": "Hakuba",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "3ccc402a0e7ae9e6988b63c8d037c31df4fd31c8": {
+      "guilds": [
+        {
+          "tag": "GSW",
+          "name": "Guardians of Wynn",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "402280a3b15ecb25ba24ef15d2197519cd7c2cbc": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "41283443842eda6c2d38cefc1caa45c41a2781a3": {
+      "guilds": [
+        {
+          "tag": "GSW",
+          "name": "Guardians of Wynn",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "468e32d37bb762b59cc7d93048a0417835d641a5": {
+      "guilds": [
+        {
+          "tag": "MVP",
+          "name": "Shadow Souls",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "49a9627e81d11fe4dfcbf2dd718542e028871ed9": {
+      "guilds": [
+        {
+          "tag": "MVP",
+          "name": "Shadow Souls",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "4ad4d5ca0ba8861353a0c946b22da41bfef6a17b": {
+      "guilds": [
+        {
+          "tag": "BNU",
+          "name": "BKUnion",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "4af97c1176f142ff4915fbe131186ec1402d6137": {
+      "guilds": [
+        {
+          "tag": "OUS",
+          "name": "RedLotus",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "51d4a13e2ea2ba86c98f6d4ddcda1cdf94b70b8f": {
+      "guilds": [
+        {
+          "tag": "BRIS",
+          "name": "BRIS",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "54a0c2f3fbd28408735f81d9defd39ea0e78a92d": {
+      "guilds": [
+        {
+          "tag": "RIP",
+          "name": "JungleCorp",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "584698db1f25fd6e5de1ac2f95052b9beea5f47f": {
+      "guilds": [
+        {
+          "tag": "FOX",
+          "name": "FoxTaleSkeletons",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "5a9af7917d1fda225d1fcc071bdb73f4b0f4cfa5": {
+      "guilds": [
+        {
+          "tag": "Sky",
+          "name": "Skynet",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "5d06adfca7529838f745036bbd6d7813f25effef": {
+      "guilds": [
+        {
+          "tag": "APA",
+          "name": "Astrum Pantheon",
+          "confidence": "Medium",
+          "status": "probable"
+        },
+        {
+          "tag": "UwU",
+          "name": "Fartboys",
+          "confidence": "Low",
+          "status": "probable"
+        }
+      ]
+    },
+    "61dfcdacc1fe4c997ade8be1986e9bf3c3346f9a": {
+      "guilds": [
+        {
+          "tag": "ERM",
+          "name": "ElongatedMuskrat",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "642ae8fb91da51e760daed56011c92233e496c8f": {
+      "guilds": [
+        {
+          "tag": "BRIS",
+          "name": "BRIS",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "6733242919139605ef809a02d067c4ac13c728f3": {
+      "guilds": [
+        {
+          "tag": "GSW",
+          "name": "Guardians of Wynn",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "673c38a821eb6985b5748b0115988794fc1db860": {
+      "guilds": [
+        {
+          "tag": "GSW",
+          "name": "Guardians of Wynn",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "68552c0d87859f7aeca1b2c6cb9531bf42f9cb9b": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "69f3bf1c76893134a905d340ba2d841daffba4e6": {
+      "guilds": [
+        {
+          "tag": "RIP",
+          "name": "JungleCorp",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "6bf490bbdb844559ffac43717f40e9a00178845e": {
+      "guilds": [
+        {
+          "tag": "PUN",
+          "name": "Paladins United",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "6d44c599d8bb7e420ffd83062becfaed3a55ecf7": {
+      "guilds": [
+        {
+          "tag": "ERN",
+          "name": "Emorians",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "6da4cc30e481f869d048746898c0cdc395c7bddf": {
+      "guilds": [
+        {
+          "tag": "RIP",
+          "name": "JungleCorp",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "797f40e9e30cdc9668f6179496fe5d08310c6cf0": {
+      "guilds": [
+        {
+          "tag": "owo",
+          "name": "Oral Without",
+          "confidence": "Low",
+          "status": "probable"
+        }
+      ]
+    },
+    "79cec7271f8dc8df12df1837a661b1319720f53c": {
+      "guilds": [
+        {
+          "tag": "OUS",
+          "name": "RedLotus",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "7d66c0cc9a55e0d53c70adf0b47a050ad971545a": {
+      "guilds": [
+        {
+          "tag": "UwU",
+          "name": "Fartboys",
+          "confidence": "Low",
+          "status": "probable"
+        }
+      ]
+    },
+    "92451807d402212575b63e5e6f6bd81d004c2371": {
+      "guilds": [
+        {
+          "tag": "SDC",
+          "name": "the Aragods",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "933789d0f9760baaf80cf435ee42dc5aa0e9996d": {
+      "guilds": [
+        {
+          "tag": "ERM",
+          "name": "ElongatedMuskrat",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "9403af688ccf4d9c13fea660fd470455898dc66b": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "99e0bde37b50cd8276d517896a9245b9efe48a04": {
+      "guilds": [
+        {
+          "tag": "FAR",
+          "name": "AMBIGUOUS",
+          "confidence": "Low",
+          "status": "ambiguous"
+        }
+      ]
+    },
+    "9b6eaefa154eb92bd6c5d05916db3324daca987e": {
+      "guilds": [
+        {
+          "tag": "TAq",
+          "name": "The Aquarium",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "9dc0a38ac39b8585dd5526ce527d13fe6a2df1c9": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "9fab58dbb39f264fa0b76ffe475093949bd4f598": {
+      "guilds": [
+        {
+          "tag": "TAq",
+          "name": "The Aquarium",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "a441a525a2a6224166b565b8df9de1b619c31aeb": {
+      "guilds": [
+        {
+          "tag": "OUS",
+          "name": "RedLotus",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "a5980bd7f97115146ad4c3685814efcbf77eb9c6": {
+      "guilds": [
+        {
+          "tag": "OUS",
+          "name": "RedLotus",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "a73a367dd77b48d5cf7f273a9d9e450d53755231": {
+      "guilds": [
+        {
+          "tag": "ERN",
+          "name": "Emorians",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "a7424180d8b3e8594fdd3f38eb3171493f5afd15": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "adf6b1dca849f85b79c6efb56b597408ef6e4ae3": {
+      "guilds": [
+        {
+          "tag": "NFR",
+          "name": "Nefarious Ravens",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "aea5e123075597ddfe7fe366aa09b252d0e4ea0b": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "b081a5c4a03673499d677c28ea62f14973a91319": {
+      "guilds": [
+        {
+          "tag": "LYA",
+          "name": "LegendaryAsians",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "b8a036c7cfbbab92cd47696851a728deb8a40d2d": {
+      "guilds": [
+        {
+          "tag": "GHT",
+          "name": "Ghost",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "b8f64382b8f035927ccc429c94f143246b573226": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "bfbb8ed86dfbf5f8ba6c4149c1d63278ef19cced": {
+      "guilds": [
+        {
+          "tag": "OUS",
+          "name": "RedLotus",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "c2508a22dff5bf0b97eedfbc5d5fb984959942ee": {
+      "guilds": [
+        {
+          "tag": "HAX",
+          "name": "Titans of Termina",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "c5244ab722ebd0568d228f2a89065fece0efcd5f": {
+      "guilds": [
+        {
+          "tag": "HAX",
+          "name": "Titans of Termina",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "c8aae4030d707247a4e5f61dd02a0adcfd7cf7ca": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "ca09bade0ff11024ece6e7e9691a7d968fc7ac85": {
+      "guilds": [
+        {
+          "tag": "LYA",
+          "name": "LegendaryAsians",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "d00d53dfc26fc8ac0fd886322418b3a3547b1b67": {
+      "guilds": [
+        {
+          "tag": "BNU",
+          "name": "BKUnion",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "d6a5ee82dc3e14c0d7867ef1dd9f96a2a4043cb3": {
+      "guilds": [
+        {
+          "tag": "FAR",
+          "name": "AMBIGUOUS",
+          "confidence": "Low",
+          "status": "ambiguous"
+        }
+      ]
+    },
+    "d7fbc311fdd7b9cd841ac8613023c75128b41d66": {
+      "guilds": [
+        {
+          "tag": "RIP",
+          "name": "JungleCorp",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "d8c9a7afe314c39229c7c98e91d676c1e8116f0e": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "dda80c4e9f1ff431bd66152a6578c687ca0e03a5": {
+      "guilds": [
+        {
+          "tag": "NFR",
+          "name": "Nefarious Ravens",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "e1efa555b35189fa512e2723a6363573d99edd17": {
+      "guilds": [
+        {
+          "tag": "PUN",
+          "name": "Paladins United",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "e4a00d7e606c56d22a693a980197b88c3060ef9d": {
+      "guilds": [
+        {
+          "tag": "FOX",
+          "name": "FoxTaleSkeletons",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "e6fe34bc7535202c2690f2b300c176b338c14754": {
+      "guilds": [
+        {
+          "tag": "SDC",
+          "name": "the Aragods",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "e7379c446f557ba36e29084a0eaa751c022209e6": {
+      "guilds": [
+        {
+          "tag": "NVM",
+          "name": "Nevermind",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "e8dd65b4ef3c398e0d8e80f47e3f6e116b13d85c": {
+      "guilds": [
+        {
+          "tag": "ERN",
+          "name": "Emorians",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "ea23dd32392ac306ae6d44985ccd588a7de88d9b": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "eb58e7e6c6a6cbde0aa36a4ce2c6ea516a825564": {
+      "guilds": [
+        {
+          "tag": "RIP",
+          "name": "JungleCorp",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "edc4624360b319aa2964f9227ea3cdd941bfd98d": {
+      "guilds": [
+        {
+          "tag": "ERM",
+          "name": "ElongatedMuskrat",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "eefb79c9f1564f37b70b592dd04f17f86f24e19e": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "efc37d214406d72098dc0e2419c11d3dbd3fc647": {
+      "guilds": [
+        {
+          "tag": "RIP",
+          "name": "JungleCorp",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "f0410cf4cdfb6459be76ad76cfb42654a2a97080": {
+      "guilds": [
+        {
+          "tag": "NVM",
+          "name": "Nevermind",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "f79af297513dc66cd21bf79c8f5b16372b430ee3": {
+      "guilds": [
+        {
+          "tag": "PUN",
+          "name": "Paladins United",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "f8c6a23f184ea433e7c50345cb013a169cb85f23": {
+      "guilds": [
+        {
+          "tag": "HAG",
+          "name": "Hakuba",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "f933d1cef07759e1ca91f94bf44eff912d6a07a8": {
+      "guilds": [
+        {
+          "tag": "Nia",
+          "name": "Nerfuria",
+          "confidence": "Medium",
+          "status": "probable"
+        }
+      ]
+    },
+    "fa3dbfcf7038cc99e8186c8bac87ea50da78b2cd": {
+      "guilds": [
+        {
+          "tag": "ESI",
+          "name": "Empire of Sindria",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    },
+    "fc190ecfa5ec91d2ec2ec36dd2ff562b1f025aa6": {
+      "guilds": [
+        {
+          "tag": "NFR",
+          "name": "Nefarious Ravens",
+          "confidence": "High",
+          "status": "probable"
+        }
+      ]
+    }
+  }
+}

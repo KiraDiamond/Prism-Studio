@@ -132,6 +132,12 @@ def main():
         temporary = catalog_path.with_suffix(".json.tmp")
         temporary.write_text(json.dumps(document, separators=(",", ":")), encoding="utf-8")
         temporary.replace(catalog_path)
+        reviewed_path = CATALOG / "guild-capes.json"
+        reviewed = json.loads(reviewed_path.read_text(encoding="utf-8"))
+        reviewed["capes"][cape["sha1"]] = {"guilds": cape["guilds"]}
+        reviewed_temporary = reviewed_path.with_suffix(".json.tmp")
+        reviewed_temporary.write_text(json.dumps(reviewed, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        reviewed_temporary.replace(reviewed_path)
         print(f"Recorded possible guild {guild['name']} ({guild['prefix']}) for {cape['id']}; ownership is unverified.")
 
 

@@ -1,4 +1,5 @@
 node_modules/
+/work/
 *.log
 __pycache__/
 *.pyc
