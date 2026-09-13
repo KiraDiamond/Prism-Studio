@@ -839,6 +839,19 @@ select,select option{background:var(--bg-hover);color:var(--text-primary)}
 .cape-catalog-card .cape-catalog-no-preview{height:128px;margin-bottom:8px}
 .cape-catalog-card strong,.cape-catalog-card span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cape-catalog-card strong{font-size:11px}.cape-catalog-card span{margin-top:3px;color:var(--text-muted);font-size:10px}
+.cape-catalog-variations{grid-column:1/-1;padding:14px;border:1px solid var(--accent-cyan);border-radius:var(--radius-sm);background:var(--bg-soft)}
+.cape-catalog-variations h4{margin:0 0 4px;font-size:13px}
+.cape-catalog-variations p{margin:0 0 12px;color:var(--text-muted);font-size:11px}
+.cape-catalog-variation-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:9px}
+.cape-catalog-variation{min-width:0;padding:9px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);background:var(--bg-surface);color:var(--text-primary);text-align:left;cursor:pointer}
+.cape-catalog-variation:hover,.cape-catalog-variation.active{border-color:var(--accent-cyan);background:var(--bg-hover)}
+.cape-catalog-variation:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:2px}
+.cape-catalog-variation img,.cape-catalog-variation .cape-catalog-no-preview{display:block;width:100%;height:112px;object-fit:contain;margin-bottom:8px;image-rendering:pixelated}
+.cape-catalog-variation strong,.cape-catalog-variation span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.cape-catalog-variation span{margin-top:3px;color:var(--text-muted)}
+.cape-catalog-uncertain{margin-top:12px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.cape-catalog-uncertain strong{display:block;font-size:11px}
+.cape-catalog-uncertain button{display:block;width:100%;margin-top:6px;padding:7px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);background:var(--bg-surface);color:var(--text-primary);text-align:left;cursor:pointer}
 .cape-catalog-detail{position:sticky;top:12px;min-height:120px;padding:16px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);background:var(--bg-soft);overflow-wrap:anywhere}
 .cape-catalog-detail h3{margin:6px 0 12px;font-size:16px}
 .cape-catalog-large{display:block;width:min(100%,185px);height:260px;object-fit:contain;margin:0 auto 12px;image-rendering:pixelated}

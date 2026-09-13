@@ -1,6 +1,9 @@
-const capeCatalog = { records:null, filtered:[], matchCount:0, groupSizes:new Map(), selected:null, shown:60, visible:false, loading:null };
+const capeCatalog = { records:null, bySha:new Map(), filtered:[], matchCount:0,
+    groups:new Map(), groupBySha:new Map(), uncertainBySha:new Map(), selected:null,
+    expandedGroup:null, expandedAnchorSha:null, shown:60, visible:false, loading:null };
 const catalogAsset = (folder,sha) => `catalog/${folder}/${sha}.png`;
-const catalogGroup = cape => cape.repeat_of || cape.sha1;
+const catalogGroup = cape => capeCatalog.groupBySha.get(cape.sha1) || cape.sha1;
+const catalogMembers = cape => capeCatalog.groups.get(catalogGroup(cape));
 
 function catalogOption(select,value,label) {
     select.add(new Option(label,value));
@@ -10,18 +13,34 @@ async function loadCapeCatalog() {
     if (capeCatalog.records) return;
     if (capeCatalog.loading) return capeCatalog.loading;
     capeCatalog.loading=(async()=>{
-        const response=await fetch('catalog/capes.json');
-        if (!response.ok) throw new Error('Catalog files are unavailable.');
-        const data=await response.json();
+        const [response,variationResponse]=await Promise.all([
+            fetch('catalog/capes.json'),fetch('catalog/variation-groups.json')
+        ]);
+        if (!response.ok || !variationResponse.ok) throw new Error('Catalog files are unavailable.');
+        const [data,variationIndex]=await Promise.all([response.json(),variationResponse.json()]);
         if (!Array.isArray(data.capes) || !data.capes.length) throw new Error('Catalog data is incomplete.');
+        if (variationIndex.catalog_count>data.capes.length) throw new Error('Cape variation index is out of date.');
         capeCatalog.records=data.capes;
-        for (const cape of data.capes) {
-            const group=catalogGroup(cape);
-            capeCatalog.groupSizes.set(group,(capeCatalog.groupSizes.get(group)||0)+1);
+        capeCatalog.bySha=new Map(data.capes.map(cape=>[cape.sha1,cape]));
+        for (const group of variationIndex.groups) {
+            const members=group.variants.flatMap(variant=>variant.members);
+            for (const sha of members) {
+                if (!capeCatalog.bySha.has(sha) || capeCatalog.groupBySha.has(sha))
+                    throw new Error('Cape variation index contains an invalid or repeated ID.');
+                capeCatalog.groupBySha.set(sha,group.id);
+            }
+            capeCatalog.groups.set(group.id,{...group,members});
+        }
+        for (const pair of variationIndex.uncertain) {
+            if (!capeCatalog.bySha.has(pair.a) || !capeCatalog.bySha.has(pair.b)) continue;
+            for (const [sha,other] of [[pair.a,pair.b],[pair.b,pair.a]]) {
+                if (!capeCatalog.uncertainBySha.has(sha)) capeCatalog.uncertainBySha.set(sha,[]);
+                capeCatalog.uncertainBySha.get(sha).push(other);
+            }
         }
         const date=new Date(data.generated_at);
         document.getElementById('cape-catalog-source').textContent=
-            `${data.capes.length.toLocaleString()} capes · snapshot ${date.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})} · guild links are tentative; creation years are unavailable`;
+            `${data.capes.length.toLocaleString()} capes · ${variationIndex.groups.length.toLocaleString()} expandable designs · ${variationIndex.uncertain.length} unresolved pairs kept separate · snapshot ${date.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}`;
 
         const colors=new Set(), shades=new Set(), sizes=new Set(), tags=new Set(), guilds=new Map();
         for (const cape of data.capes) {
@@ -80,54 +99,101 @@ function filterCapeCatalog() {
     });
     capeCatalog.matchCount=matches.length;
     const repeats=value('cape-catalog-repeats');
-    if (repeats==='hide') {
+    if (repeats!=='all') {
         const seen=new Set();
         capeCatalog.filtered=matches.filter(cape=>{
             const group=catalogGroup(cape);
+            if (repeats==='only' && (catalogMembers(cape)?.variants.length || 0)<2) return false;
             if (seen.has(group)) return false;
             seen.add(group);
             return true;
         });
-    } else if (repeats==='only') {
-        capeCatalog.filtered=matches.filter(cape=>capeCatalog.groupSizes.get(catalogGroup(cape))>1);
     } else capeCatalog.filtered=matches;
-    if (capeCatalog.selected && !capeCatalog.filtered.includes(capeCatalog.selected)) {
+    const visibleGroups=new Set(capeCatalog.filtered.map(catalogGroup));
+    if (capeCatalog.selected && !visibleGroups.has(catalogGroup(capeCatalog.selected))) {
         capeCatalog.selected=null;
         const note=document.createElement('p');
         note.textContent='Choose a cape to view its colors and tags.';
         document.getElementById('cape-catalog-detail').replaceChildren(note);
     }
+    if (capeCatalog.expandedGroup && !visibleGroups.has(capeCatalog.expandedGroup)) {
+        capeCatalog.expandedGroup=null;
+        capeCatalog.expandedAnchorSha=null;
+    }
+    if (capeCatalog.expandedGroup && !capeCatalog.filtered.some(cape=>cape.sha1===capeCatalog.expandedAnchorSha)) {
+        capeCatalog.expandedAnchorSha=capeCatalog.filtered.find(cape=>catalogGroup(cape)===capeCatalog.expandedGroup)?.sha1;
+    }
     capeCatalog.shown=60;
     renderCapeCatalog();
+}
+
+function catalogPreview(cape) {
+    const image=document.createElement(cape.coverage===0?'div':'img');
+    if (cape.coverage===0) {
+        image.className='cape-catalog-no-preview';
+        image.textContent='Transparent back';
+    } else {
+        image.src=catalogAsset('back',cape.sha1);
+        image.alt=''; image.loading='lazy';
+    }
+    return image;
+}
+
+function catalogVariationPanel(group) {
+    const panel=document.createElement('section');
+    panel.id='cape-catalog-variation-panel';
+    panel.className='cape-catalog-variations';
+    panel.setAttribute('aria-label','Color variations of this cape design');
+    const heading=document.createElement('h4');
+    heading.textContent=group.variants.length>1
+        ? `${group.variants.length} color variations of this design`
+        : `${group.members.length} identical copies of this design`;
+    const note=document.createElement('p');
+    note.textContent='Choose a variation to see its own details and save that exact cape.';
+    const variants=document.createElement('div');
+    variants.className='cape-catalog-variation-grid';
+    for (const variant of group.variants) {
+        const cape=capeCatalog.bySha.get(variant.representative);
+        const card=document.createElement('button');
+        card.type='button'; card.className='cape-catalog-variation';
+        if (capeCatalog.selected && variant.members.includes(capeCatalog.selected.sha1)) card.classList.add('active');
+        card.dataset.sha=cape.sha1;
+        card.setAttribute('aria-label',`${cape.id}, ${cape.color} ${cape.shade}, ${variant.members.length} identical file${variant.members.length===1?'':'s'}`);
+        const title=document.createElement('strong'); title.textContent=cape.id;
+        const subtitle=document.createElement('span');
+        subtitle.textContent=`${cape.color} · ${cape.shade}${variant.members.length>1?' · '+variant.members.length+' copies':''}`;
+        card.append(catalogPreview(cape),title,subtitle);
+        variants.append(card);
+    }
+    panel.append(heading,note,variants);
+    return panel;
 }
 
 function renderCapeCatalog() {
     const grid=document.getElementById('cape-catalog-grid');
     grid.replaceChildren();
     for (const cape of capeCatalog.filtered.slice(0,capeCatalog.shown)) {
+        const group=catalogMembers(cape);
         const card=document.createElement('button');
         card.type='button';
-        card.className='cape-catalog-card'+(capeCatalog.selected?.sha1===cape.sha1?' active':'');
+        card.className='cape-catalog-card'+(capeCatalog.selected && catalogGroup(capeCatalog.selected)===catalogGroup(cape)?' active':'');
         card.dataset.sha=cape.sha1;
-        card.setAttribute('aria-label',`${cape.id}, ${cape.color}, ${cape.resolution}`);
-        const image=document.createElement(cape.coverage===0?'div':'img');
-        if (cape.coverage===0) {
-            image.className='cape-catalog-no-preview';
-            image.textContent='Transparent back';
-        } else {
-            image.src=catalogAsset('back',cape.sha1);
-            image.alt=''; image.loading='lazy';
+        card.setAttribute('aria-label',`${cape.id}, ${cape.color}, ${cape.resolution}${group?', '+group.variants.length+' variations':''}`);
+        if (group) {
+            card.setAttribute('aria-expanded',String(capeCatalog.expandedGroup===group.id));
+            card.setAttribute('aria-controls','cape-catalog-variation-panel');
         }
         const title=document.createElement('strong'); title.textContent=cape.id;
-        const copies=capeCatalog.groupSizes.get(catalogGroup(cape));
-        const subtitle=document.createElement('span'); subtitle.textContent=`${cape.color} · ${cape.resolution}${copies>1?' · '+copies+' alike':''}`;
-        card.title=copies>1?`${copies} entries have this or a very similar front/back preview`:'';
-        card.append(image,title,subtitle);
+        const subtitle=document.createElement('span');
+        subtitle.textContent=`${cape.color} · ${cape.resolution}${group?' · '+(group.variants.length>1?group.variants.length+' variations':group.members.length+' copies'):''}`;
+        card.append(catalogPreview(cape),title,subtitle);
         grid.append(card);
+        if (group && capeCatalog.expandedGroup===group.id && capeCatalog.expandedAnchorSha===cape.sha1)
+            grid.append(catalogVariationPanel(group));
     }
     const count=capeCatalog.filtered.length;
     const repeatMode=document.getElementById('cape-catalog-repeats').value;
-    document.getElementById('cape-catalog-count').textContent=repeatMode==='hide'
+    document.getElementById('cape-catalog-count').textContent=repeatMode!=='all'
         ? `${count.toLocaleString()} designs from ${capeCatalog.matchCount.toLocaleString()} capes`
         : `${count.toLocaleString()} ${count===1?'cape':'capes'}`;
     document.getElementById('cape-catalog-empty').hidden=count!==0;
@@ -138,7 +204,11 @@ function renderCapeCatalog() {
 
 function showCapeCatalogDetail(cape) {
     capeCatalog.selected=cape;
-    document.querySelectorAll('.cape-catalog-card').forEach(card=>card.classList.toggle('active',card.dataset.sha===cape.sha1));
+    document.querySelectorAll('.cape-catalog-card').forEach(card=>card.classList.toggle('active',catalogGroup(capeCatalog.bySha.get(card.dataset.sha))===catalogGroup(cape)));
+    document.querySelectorAll('.cape-catalog-variation').forEach(card=>{
+        const variant=catalogMembers(cape)?.variants.find(item=>item.representative===card.dataset.sha);
+        card.classList.toggle('active',Boolean(variant?.members.includes(cape.sha1)));
+    });
     const detail=document.getElementById('cape-catalog-detail');
     detail.replaceChildren();
     const heading=document.createElement('div'); heading.className='section-kicker'; heading.textContent='CAPE DETAILS';
@@ -159,11 +229,27 @@ function showCapeCatalogDetail(cape) {
     }
     const tags=document.createElement('p'); tags.className='cape-catalog-tags'; tags.textContent=`Tags: ${cape.tags.join(', ')}`;
     detail.append(heading,title,preview,facts,id,palette,tags);
-    const copies=capeCatalog.groupSizes.get(catalogGroup(cape));
-    if (copies>1) {
+    const group=catalogMembers(cape);
+    if (group) {
         const note=document.createElement('p');
-        note.textContent=`${copies} entries share this or a very similar front/back preview. Choose “Show all” to see each entry.`;
+        note.textContent=group.variants.length>1
+            ? `${group.variants.length} accepted color variations share this design. Open the card to compare them.`
+            : `${group.members.length} identical files share this design. Choose “Show every cape” to inspect each copy.`;
         detail.append(note);
+    }
+    const uncertain=capeCatalog.uncertainBySha.get(cape.sha1) || [];
+    if (uncertain.length) {
+        const section=document.createElement('div'); section.className='cape-catalog-uncertain';
+        const label=document.createElement('strong'); label.textContent='Possible lookalikes · not confirmed recolors';
+        section.append(label);
+        for (const sha of uncertain.slice(0,5)) {
+            const other=capeCatalog.bySha.get(sha);
+            const button=document.createElement('button');
+            button.type='button'; button.textContent=`View ${other.id}`;
+            button.addEventListener('click',()=>showCapeCatalogDetail(other));
+            section.append(button);
+        }
+        detail.append(section);
     }
     if (cape.guilds.length) {
         const guild=document.createElement('p');
@@ -218,14 +304,28 @@ document.getElementById('cape-catalog-clear').addEventListener('click',()=>{
     for (const id of ['cape-catalog-search','cape-catalog-color','cape-catalog-shade','cape-catalog-size','cape-catalog-tag','cape-catalog-guild']) {
         document.getElementById(id).value='';
     }
-    document.getElementById('cape-catalog-repeats').value='all';
+    document.getElementById('cape-catalog-repeats').value='grouped';
     document.getElementById('cape-catalog-visibility').value='visible';
     filterCapeCatalog();
 });
 document.getElementById('cape-catalog-grid').addEventListener('click',event=>{
+    const variation=event.target.closest('.cape-catalog-variation');
+    if (variation) {
+        const cape=capeCatalog.bySha.get(variation.dataset.sha);
+        if (cape) showCapeCatalogDetail(cape);
+        return;
+    }
     const card=event.target.closest('.cape-catalog-card');
-    const cape=capeCatalog.records?.find(item=>item.sha1===card?.dataset.sha);
-    if (cape) showCapeCatalogDetail(cape);
+    const cape=capeCatalog.bySha.get(card?.dataset.sha);
+    if (!cape) return;
+    const group=catalogMembers(cape);
+    if (group) {
+        const same=capeCatalog.expandedGroup===group.id && capeCatalog.expandedAnchorSha===cape.sha1;
+        capeCatalog.expandedGroup=same?null:group.id;
+        capeCatalog.expandedAnchorSha=same?null:cape.sha1;
+        renderCapeCatalog();
+    }
+    showCapeCatalogDetail(cape);
 });
 document.getElementById('cape-catalog-more').addEventListener('click',()=>{
     capeCatalog.shown+=60;
