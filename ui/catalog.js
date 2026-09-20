@@ -8,19 +8,19 @@ const catalogCollator=new Intl.Collator(undefined,{numeric:true,sensitivity:'bas
 let catalogImageObserver;
 
 function observeCatalogImages(root=document) {
-    const images=[...root.querySelectorAll('img[data-catalog-src]')];
-    const load=image=>{
-        image.src=image.dataset.catalogSrc;
-        delete image.dataset.catalogSrc;
+    const frames=[...root.querySelectorAll('.cape-catalog-crop[data-catalog-src]')];
+    const load=frame=>{
+        frame.querySelector('img').src=frame.dataset.catalogSrc;
+        delete frame.dataset.catalogSrc;
     };
-    if (!('IntersectionObserver' in window)) { images.forEach(load); return; }
+    if (!('IntersectionObserver' in window)) { frames.forEach(load); return; }
     catalogImageObserver??=new IntersectionObserver(entries=>{
         for (const entry of entries) if (entry.isIntersecting) {
             catalogImageObserver.unobserve(entry.target);
             load(entry.target);
         }
     },{rootMargin:'160px'});
-    images.forEach(image=>catalogImageObserver.observe(image));
+    frames.forEach(frame=>catalogImageObserver.observe(frame));
 }
 
 function catalogOption(select,value,label) {
@@ -162,8 +162,8 @@ function catalogPreview(cape,large=false) {
     }
     const frame=document.createElement('div');
     frame.className='cape-catalog-crop'+(large?' cape-catalog-large':'');
+    frame.dataset.catalogSrc=catalogAsset(cape.sha1);
     const image=document.createElement('img');
-    image.dataset.catalogSrc=catalogAsset(cape.sha1);
     image.alt=large?`Back of cape ${cape.id}`:'';
     image.decoding='async';
     image.addEventListener('error',()=>frame.classList.add('failed'),{once:true});
