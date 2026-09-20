@@ -29,6 +29,8 @@ const paint=(x,y,width,height,rgba)=>{
 paint(0,0,64,16,[240,16,16,255]);       // head and hat: deliberately dominant, must be ignored
 paint(0,16,16,16,[240,224,16,255]);     // leg: must be ignored
 paint(16,16,24,16,[24,64,208,255]);     // torso
+paint(32,20,8,12,[224,16,224,255]);      // rear torso panel: covered by cape, must be ignored
+paint(32,36,8,12,[224,16,224,255]);      // rear jacket panel: covered by cape, must be ignored
 paint(40,16,16,16,[32,192,96,255]);     // right arm
 paint(32,48,16,16,[48,176,112,255]);    // left arm
 const outfitPalette=extractOutfitPalette(texture,64,64,6);
@@ -36,4 +38,5 @@ assert(outfitPalette.some(([red,green,blue])=>blue>red && blue>green),'torso col
 assert(outfitPalette.some(([red,green,blue])=>green>red && green>blue),'arm color is represented');
 assert(!outfitPalette.some(([red,green,blue])=>red>green*2 && red>blue*2),'head color is excluded');
 assert(!outfitPalette.some(([red,green,blue])=>red>150 && green>150 && blue<80),'leg color is excluded');
+assert(!outfitPalette.some(([red,green,blue])=>red>150 && blue>150 && green<80),'rear torso colors are excluded');
 console.log('PASS cape palette and recolour invariants');

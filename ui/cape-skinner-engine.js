@@ -35,9 +35,14 @@ export function extractOutfitPalette(pixels,width,height,limit=6) {
     if (!pixels || width!==64 || ![32,64].includes(height) || pixels.length!==width*height*4 || limit<1)
         throw new Error('Skin must be 64x32 or 64x64 pixels.');
     const buckets=new Map();
-    // Minecraft UV rectangles: torso first, then arms. Weighting favors the chest while retaining sleeves.
-    const regions=[[16,16,24,16,4],[40,16,16,16,2]];
-    if (height===64) regions.push([32,48,16,16,2],[16,32,24,16,3],[40,32,16,16,2],[48,48,16,16,2]);
+    // Torso front/sides/top/bottom exclude the cape-covered rear panel at x32..39, y20..31.
+    // Weighting favors the chest while retaining arms, jacket surfaces, and sleeves.
+    const regions=[[16,16,24,4,4],[16,20,16,12,4],[40,16,16,16,2]];
+    if (height===64) regions.push(
+        [32,48,16,16,2],
+        [16,32,24,4,3],[16,36,16,12,3],
+        [40,32,16,16,2],[48,48,16,16,2]
+    );
     for (const [x,y,regionWidth,regionHeight,weight] of regions)
         for (let row=y;row<y+regionHeight;row++) for (let column=x;column<x+regionWidth;column++)
             addPixel(buckets,pixels,(row*width+column)*4,weight);
