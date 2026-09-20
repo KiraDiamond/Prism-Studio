@@ -1,6 +1,9 @@
 // Cape PNGs live in the test app's data folder; only the selected tile is a browser preference.
 let capeLibrary=[];
 let capePreviewKey='';
+let capeSkinnerSource=null;
+let capeSkinnerUploadedSkin='';
+let capeSkinnerResult='';
 const selectedCapes=loadJsonPreference('selected_capes_v1',{});
 const wynntilsConnectionStatus={};
 const wynntilsStatusText={
@@ -152,6 +155,121 @@ async function applySavedCape() {
     finally { button.disabled=false; }
 }
 
+function loadPixelImage(source) {
+    return new Promise((resolve,reject)=>{
+        const image=new Image();
+        image.onload=()=>{
+            const canvas=document.createElement('canvas');
+            canvas.width=image.naturalWidth; canvas.height=image.naturalHeight;
+            const context=canvas.getContext('2d',{willReadFrequently:true});
+            context.drawImage(image,0,0);
+            resolve({width:canvas.width,height:canvas.height,pixels:context.getImageData(0,0,canvas.width,canvas.height).data});
+        };
+        image.onerror=()=>reject(new Error('Could not read this image.'));
+        image.src=source;
+    });
+}
+
+function drawCapePixels(canvas,width,height,pixels) {
+    canvas.width=width; canvas.height=height;
+    canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pixels),width,height),0,0);
+}
+
+function currentAccountSkin() {
+    return state.accounts.find(account=>account.name.toLowerCase()===state.profile.toLowerCase())?.skin||'';
+}
+
+function updateCapeSkinnerReadyState() {
+    const current=document.getElementById('cape-skinner-current').checked;
+    const hasSkin=current?Boolean(currentAccountSkin()):Boolean(capeSkinnerUploadedSkin);
+    const animated=capeSkinnerSource?.kind==='catalog' && (capeSkinnerSource.cape.animated || capeSkinnerSource.cape.source_format==='GIF');
+    document.getElementById('cape-skinner-generate').disabled=!capeSkinnerSource||!hasSkin||animated;
+    if (animated) document.getElementById('cape-skinner-status').textContent='Animated catalog capes are read-only so their animation is never flattened.';
+    else if (!hasSkin) document.getElementById('cape-skinner-status').textContent=current?'This account does not have a skin available. Upload one instead.':'Choose a skin PNG to continue.';
+}
+
+function openCapeSkinner() {
+    if (!state.profile) { showToast('Choose a Minecraft account first.','error'); return; }
+    const catalogCape=capeCatalog.visible?capeCatalog.selected:null;
+    const savedCape=selectedCape();
+    capeSkinnerSource=catalogCape?{kind:'catalog',cape:catalogCape}:savedCape?{kind:'saved',cape:savedCape}:null;
+    if (!capeSkinnerSource) {
+        showToast(capeCatalog.visible?'Choose a catalog cape first.':'Choose or add a saved cape first.','error');
+        return;
+    }
+    capeSkinnerResult='';
+    document.getElementById('cape-skinner-save').disabled=true;
+    const label=capeSkinnerSource.kind==='catalog'?`${catalogCape.id} from the catalog`:savedCape.name;
+    document.getElementById('cape-skinner-source').textContent=`Using ${label}. The original will not be changed.`;
+    document.getElementById('cape-skinner-name').value=`${catalogCape?.id||savedCape.name} - skin matched`.slice(0,60);
+    document.getElementById('cape-skinner-palette').replaceChildren();
+    for (const id of ['cape-skinner-before','cape-skinner-after']) {
+        const canvas=document.getElementById(id); canvas.width=64; canvas.height=32;
+        canvas.getContext('2d').clearRect(0,0,64,32);
+    }
+    document.getElementById('cape-skinner-status').textContent='Generate a preview, then save it as a new cape.';
+    if (!currentAccountSkin()) document.getElementById('cape-skinner-upload').checked=true;
+    updateCapeSkinnerReadyState();
+    document.getElementById('cape-skinner-dialog').showModal();
+}
+
+async function readSkinUpload(file) {
+    if (!file || file.size>2*1024*1024 || file.type && file.type!=='image/png') throw new Error('Choose a skin PNG under 2 MB.');
+    const data=await new Promise((resolve,reject)=>{
+        const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=()=>reject(new Error('Could not read the skin PNG.')); reader.readAsDataURL(file);
+    });
+    const image=await loadPixelImage(data);
+    if (image.width!==64 || ![32,64].includes(image.height)) throw new Error('Skin must be 64x32 or 64x64 pixels.');
+    return data;
+}
+
+async function generateSkinnedCape() {
+    const button=document.getElementById('cape-skinner-generate');
+    const status=document.getElementById('cape-skinner-status');
+    button.disabled=true; status.textContent='Building palette and recolouring cape…';
+    try {
+        const skinSource=document.getElementById('cape-skinner-current').checked?currentAccountSkin():capeSkinnerUploadedSkin;
+        if (!skinSource) throw new Error('Choose a skin first.');
+        const capeSource=capeSkinnerSource.kind==='catalog'
+            ? await invoke('fetch_catalog_cape',{sha:capeSkinnerSource.cape.sha1})
+            : capeSkinnerSource.cape.texture;
+        const [skin,cape,engine]=await Promise.all([loadPixelImage(skinSource),loadPixelImage(capeSource),import('./cape-skinner-engine.js')]);
+        const palette=engine.extractSkinPalette(skin.pixels,6);
+        const recoloured=engine.recolorCapePixels(cape.pixels,palette);
+        drawCapePixels(document.getElementById('cape-skinner-before'),cape.width,cape.height,cape.pixels);
+        const after=document.getElementById('cape-skinner-after');
+        drawCapePixels(after,cape.width,cape.height,recoloured);
+        capeSkinnerResult=after.toDataURL('image/png');
+        const paletteHost=document.getElementById('cape-skinner-palette'); paletteHost.replaceChildren();
+        for (const rgb of palette) {
+            const chip=document.createElement('span');
+            chip.style.backgroundColor=`rgb(${rgb.join(',')})`; chip.title=`RGB ${rgb.join(', ')}`; paletteHost.append(chip);
+        }
+        document.getElementById('cape-skinner-save').disabled=false;
+        status.textContent='Preview ready. Shading and transparency are preserved.';
+    } catch(error) {
+        capeSkinnerResult=''; document.getElementById('cape-skinner-save').disabled=true;
+        status.textContent=String(error);
+    } finally { updateCapeSkinnerReadyState(); }
+}
+
+async function saveSkinnedCape() {
+    const name=document.getElementById('cape-skinner-name').value.trim();
+    if (!name) { document.getElementById('cape-skinner-status').textContent='Give the new cape a name.'; return; }
+    const button=document.getElementById('cape-skinner-save'); button.disabled=true;
+    try {
+        const saved=await invoke('add_cape',{account:state.profile,name,base64Data:capeSkinnerResult});
+        capeLibrary.push(saved); selectedCapes[state.profile.toLowerCase()]=saved.id;
+        localStorage.setItem('selected_capes_v1',JSON.stringify(selectedCapes));
+        if (capeCatalog.visible) await showCapeCatalog(false);
+        renderCapeLibrary(); document.getElementById('cape-skinner-dialog').close();
+        showToast(`${name} saved as a new cape.`,'success');
+    } catch(error) {
+        document.getElementById('cape-skinner-status').textContent='Could not save cape: '+String(error);
+        button.disabled=false;
+    }
+}
+
 function setupCapeEvents() {
     window.__TAURI__?.event?.listen('wynntils-cape-status',event=>{
         const {account,status}=event.payload||{};
@@ -172,6 +290,24 @@ function setupCapeEvents() {
         } catch(error) { showToast('Could not open Wynntils login: '+String(error),'error'); }
     });
     document.getElementById('btn-browse-wynntils').addEventListener('click',()=>showCapeCatalog());
+    document.getElementById('btn-cape-skinner').addEventListener('click',openCapeSkinner);
+    document.getElementById('cape-skinner-close').addEventListener('click',()=>document.getElementById('cape-skinner-dialog').close());
+    document.getElementById('cape-skinner-generate').addEventListener('click',generateSkinnedCape);
+    document.getElementById('cape-skinner-save').addEventListener('click',saveSkinnedCape);
+    document.getElementById('cape-skinner-choose-file').addEventListener('click',()=>document.getElementById('cape-skinner-file').click());
+    for (const id of ['cape-skinner-current','cape-skinner-upload']) document.getElementById(id).addEventListener('change',event=>{
+        capeSkinnerResult=''; document.getElementById('cape-skinner-save').disabled=true;
+        if (event.target.id==='cape-skinner-upload' && event.target.checked && !capeSkinnerUploadedSkin) document.getElementById('cape-skinner-file').click();
+        updateCapeSkinnerReadyState();
+    });
+    document.getElementById('cape-skinner-file').addEventListener('change',async event=>{
+        try {
+            capeSkinnerUploadedSkin=await readSkinUpload(event.target.files[0]);
+            document.getElementById('cape-skinner-upload').checked=true;
+            document.getElementById('cape-skinner-status').textContent=`Using uploaded skin ${event.target.files[0].name}.`;
+        } catch(error) { capeSkinnerUploadedSkin=''; document.getElementById('cape-skinner-status').textContent=String(error); }
+        updateCapeSkinnerReadyState();
+    });
     document.getElementById('btn-add-cape').addEventListener('click',()=>{
         if (!state.profile) { showToast('Choose a Minecraft account first.','error'); return; }
         const input=document.getElementById('cape-file-input');

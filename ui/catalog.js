@@ -1,9 +1,27 @@
 const capeCatalog = { records:null, bySha:new Map(), filtered:[], matchCount:0,
     groups:new Map(), groupBySha:new Map(), uncertainBySha:new Map(), selected:null,
     expandedGroup:null, expandedAnchorSha:null, shown:60, visible:false, loading:null };
-const catalogAsset = (folder,sha) => `catalog/${folder}/${sha}.png`;
+const catalogAsset = sha => `https://athena.wynntils.com/capes/get/${sha}`;
 const catalogGroup = cape => capeCatalog.groupBySha.get(cape.sha1) || cape.sha1;
 const catalogMembers = cape => capeCatalog.groups.get(catalogGroup(cape));
+const catalogCollator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
+let catalogImageObserver;
+
+function observeCatalogImages(root=document) {
+    const images=[...root.querySelectorAll('img[data-catalog-src]')];
+    const load=image=>{
+        image.src=image.dataset.catalogSrc;
+        delete image.dataset.catalogSrc;
+    };
+    if (!('IntersectionObserver' in window)) { images.forEach(load); return; }
+    catalogImageObserver??=new IntersectionObserver(entries=>{
+        for (const entry of entries) if (entry.isIntersecting) {
+            catalogImageObserver.unobserve(entry.target);
+            load(entry.target);
+        }
+    },{rootMargin:'160px'});
+    images.forEach(image=>catalogImageObserver.observe(image));
+}
 
 function catalogOption(select,value,label) {
     select.add(new Option(label,value));
@@ -19,9 +37,10 @@ async function loadCapeCatalog() {
         if (!response.ok || !variationResponse.ok) throw new Error('Catalog files are unavailable.');
         const [data,variationIndex]=await Promise.all([response.json(),variationResponse.json()]);
         if (!Array.isArray(data.capes) || !data.capes.length) throw new Error('Catalog data is incomplete.');
-        if (variationIndex.catalog_count>data.capes.length) throw new Error('Cape variation index is out of date.');
+        if (variationIndex.catalog_count!==data.capes.length) throw new Error('Cape variation index is out of date.');
         capeCatalog.records=data.capes;
         capeCatalog.bySha=new Map(data.capes.map(cape=>[cape.sha1,cape]));
+        if (capeCatalog.bySha.size!==data.capes.length) throw new Error('Catalog contains repeated cape IDs.');
         for (const group of variationIndex.groups) {
             const members=group.variants.flatMap(variant=>variant.members);
             for (const sha of members) {
@@ -97,6 +116,13 @@ function filterCapeCatalog() {
             ...cape.guilds.flatMap(link=>[link.tag,link.name])].join(' ').toLowerCase();
         return terms.every(term=>searchable.includes(term));
     });
+    const sort=value('cape-catalog-sort');
+    matches.sort((a,b)=>{
+        if (sort==='coverage') return b.coverage-a.coverage||catalogCollator.compare(a.id,b.id);
+        if (sort==='resolution') return catalogCollator.compare(a.resolution,b.resolution)||catalogCollator.compare(a.id,b.id);
+        if (sort==='id') return catalogCollator.compare(a.id,b.id);
+        return catalogCollator.compare(a.color,b.color)||catalogCollator.compare(a.shade,b.shade)||catalogCollator.compare(a.id,b.id);
+    });
     capeCatalog.matchCount=matches.length;
     const repeats=value('cape-catalog-repeats');
     if (repeats!=='all') {
@@ -127,16 +153,22 @@ function filterCapeCatalog() {
     renderCapeCatalog();
 }
 
-function catalogPreview(cape) {
-    const image=document.createElement(cape.coverage===0?'div':'img');
+function catalogPreview(cape,large=false) {
     if (cape.coverage===0) {
-        image.className='cape-catalog-no-preview';
-        image.textContent='Transparent back';
-    } else {
-        image.src=catalogAsset('back',cape.sha1);
-        image.alt=''; image.loading='lazy';
+        const empty=document.createElement('div');
+        empty.className='cape-catalog-no-preview'+(large?' cape-catalog-large':'');
+        empty.textContent='Transparent back';
+        return empty;
     }
-    return image;
+    const frame=document.createElement('div');
+    frame.className='cape-catalog-crop'+(large?' cape-catalog-large':'');
+    const image=document.createElement('img');
+    image.dataset.catalogSrc=catalogAsset(cape.sha1);
+    image.alt=large?`Back of cape ${cape.id}`:'';
+    image.decoding='async';
+    image.addEventListener('error',()=>frame.classList.add('failed'),{once:true});
+    frame.append(image);
+    return frame;
 }
 
 function catalogVariationPanel(group) {
@@ -171,6 +203,7 @@ function catalogVariationPanel(group) {
 
 function renderCapeCatalog() {
     const grid=document.getElementById('cape-catalog-grid');
+    catalogImageObserver?.disconnect();
     grid.replaceChildren();
     for (const cape of capeCatalog.filtered.slice(0,capeCatalog.shown)) {
         const group=catalogMembers(cape);
@@ -200,6 +233,7 @@ function renderCapeCatalog() {
     const more=document.getElementById('cape-catalog-more');
     more.hidden=capeCatalog.shown>=count;
     more.textContent=`Show more (${Math.min(capeCatalog.shown,count).toLocaleString()} of ${count.toLocaleString()})`;
+    observeCatalogImages(grid);
 }
 
 function showCapeCatalogDetail(cape) {
@@ -213,10 +247,7 @@ function showCapeCatalogDetail(cape) {
     detail.replaceChildren();
     const heading=document.createElement('div'); heading.className='section-kicker'; heading.textContent='CAPE DETAILS';
     const title=document.createElement('h3'); title.textContent=cape.id;
-    const preview=document.createElement(cape.coverage===0?'div':'img');
-    preview.className=cape.coverage===0?'cape-catalog-no-preview cape-catalog-large':'cape-catalog-large';
-    if (cape.coverage===0) preview.textContent='Transparent back';
-    else { preview.src=catalogAsset('back',cape.sha1); preview.alt=`Back of cape ${cape.id}`; }
+    const preview=catalogPreview(cape,true);
     const facts=document.createElement('p'); facts.textContent=`${cape.resolution} · ${cape.color} · ${cape.shade} · ${Math.round(cape.coverage)}% back coverage${cape.source_format==='GIF'?' · GIF source':''}`;
     const id=document.createElement('p'); id.className='cape-catalog-hash'; id.textContent=`SHA-1 ${cape.sha1}`;
     const palette=document.createElement('div'); palette.className='cape-catalog-palette';
@@ -258,9 +289,10 @@ function showCapeCatalogDetail(cape) {
             : `Possible guild: ${cape.guilds.map(link=>`${link.tag} · ${link.name} (${link.confidence.toLowerCase()} confidence)`).join(', ')}. Not verified ownership.`;
         detail.append(guild);
     }
-    if (cape.source_format==='GIF' || cape.saveable===false) {
+    observeCatalogImages(detail);
+    if (cape.animated || cape.source_format==='GIF' || cape.saveable===false) {
         const note=document.createElement('p');
-        note.textContent=cape.source_format==='GIF'
+        note.textContent=cape.animated || cape.source_format==='GIF'
             ? 'Athena serves this cape as an animated GIF. This is a first-frame preview; saving it as a PNG cape is unavailable.'
             : 'This cape PNG exceeds the app’s 500 KB save limit. It remains available to view in the catalog.';
         detail.append(note);
@@ -278,10 +310,7 @@ async function saveCatalogCape(cape,button) {
     button.disabled=true;
     button.textContent='Saving…';
     try {
-        const response=await fetch(catalogAsset('raw',cape.sha1));
-        if (!response.ok) throw new Error('Cape PNG is unavailable.');
-        const file=new File([await response.blob()],`${cape.id}.png`,{type:'image/png'});
-        const base64Data=await readCapeFile(file);
+        const base64Data=await invoke('fetch_catalog_cape',{sha:cape.sha1});
         const saved=await invoke('add_cape',{account,name:cape.id,base64Data});
         capeLibrary.push(saved);
         selectedCapes[account.toLowerCase()]=saved.id;
@@ -297,7 +326,7 @@ async function saveCatalogCape(cape,button) {
     }
 }
 
-for (const id of ['cape-catalog-search','cape-catalog-color','cape-catalog-shade','cape-catalog-size','cape-catalog-tag','cape-catalog-guild','cape-catalog-visibility','cape-catalog-repeats']) {
+for (const id of ['cape-catalog-search','cape-catalog-color','cape-catalog-shade','cape-catalog-size','cape-catalog-tag','cape-catalog-guild','cape-catalog-visibility','cape-catalog-repeats','cape-catalog-sort']) {
     document.getElementById(id).addEventListener(id==='cape-catalog-search'?'input':'change',filterCapeCatalog);
 }
 document.getElementById('cape-catalog-clear').addEventListener('click',()=>{
@@ -306,6 +335,7 @@ document.getElementById('cape-catalog-clear').addEventListener('click',()=>{
     }
     document.getElementById('cape-catalog-repeats').value='grouped';
     document.getElementById('cape-catalog-visibility').value='visible';
+    document.getElementById('cape-catalog-sort').value='color';
     filterCapeCatalog();
 });
 document.getElementById('cape-catalog-grid').addEventListener('click',event=>{

@@ -1,8 +1,8 @@
 # Updating the Wynntils cape catalog
 
 Run `python -m pip install -r scripts/requirements-catalog.txt` once, then
-`npm run sync:capes` to fetch Athena's current public cape list and add any
-new textures to the bundled catalog. Existing cape records and hand-edited
+`npm run sync:capes` to fetch Athena's current public cape list and update the
+maintainer catalog. Existing cape records and hand-edited
 details stay intact. New entries receive a stable `ATH-` display ID, a back
 preview, resolution, color, shade, visible-back coverage, repeat grouping,
 and searchable tags. Athena currently supplies only SHA, dimensions, and an
@@ -18,9 +18,12 @@ For an already downloaded export, run:
 python scripts/sync_athena_capes.py --list-file path/to/athena-wynntils-capes.json --image-dir path/to/sha-named-pngs
 ```
 
-The app reads `ui/catalog/capes.json` and `ui/catalog/raw` / `ui/catalog/back`
-from its packaged files. Rebuild the test app after a sync to ship the new
-catalog. Re-running the sync adds only unseen Athena IDs, so manual edits to
+The production app packages `ui/catalog/capes.json` and
+`ui/catalog/variation-groups.json`, but deliberately excludes `ui/catalog/raw`
+and `ui/catalog/back`. It sorts and filters the full metadata index locally,
+loads only visible previews from Athena, and caches a selected static cape only
+when the user saves or recolors it. Rebuild the test app after a sync to ship
+the new catalog. Re-running the sync adds only unseen Athena IDs, so manual edits to
 existing records are preserved. Automatic color and similarity labels are a
 starting point for review, not verified cape descriptions.
 
@@ -40,6 +43,10 @@ filter and detail view then use that reviewed link. The sync command preserves
 reviewed links and tags on subsequent runs. Scanning has no bulk mode.
 
 ## Standalone Guild Cape Sorter
+
+This is maintainer tooling, not an end-user launcher dependency. Installed
+Prism Studio performs its global metadata sorting without Python, Node.js,
+OCR, or a local copy of every cape.
 
 On Windows, double-click `Guild Cape Sorter.exe` next to the `ui` and `scripts`
 folders in the local test checkout. The executable is a local build artifact;

@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "dev": "tauri dev",
+    "dev": "npm run build:ui && tauri dev",
     "build": "npm run build:ui && tauri build",
-    "build:ui": "esbuild skinview-entry.js --bundle --format=esm --minify --outfile=ui/skinview.bundle.js",
+    "build:ui": "esbuild skinview-entry.js --bundle --format=esm --minify --outfile=ui/skinview.bundle.js && node scripts/prepare-ui.mjs",
     "build:portable": "npm run build:ui && tauri build --no-bundle",
     "sync:capes": "python scripts/sync_athena_capes.py",
     "scan:guild": "python scripts/scan_cape_guild.py",
     "check:capes": "python -m unittest discover -s scripts -p test_*.py",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs && npm run build:ui && node scripts/test-lightweight-ui.mjs && node --test scripts/test-cape-skinner.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

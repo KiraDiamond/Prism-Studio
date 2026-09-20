@@ -52,6 +52,12 @@ Original PNGs are content-deduplicated under %APPDATA%\PrismStudio\skins. Packs 
 
 **Apply Skin** changes the selected account's Minecraft Java skin. Select a skin, click Apply Skin, check the account shown, choose Classic or Slim arms, and confirm. Studio uploads the original PNG directly to Minecraft over HTTPS. Rejoin your world/server to see the change. Offline accounts cannot upload skins. If the session has expired, refresh or sign in to that account in Prism and retry. Prism's cached preview may remain old until Prism refreshes it.
 
+## Capes
+
+The Capes page keeps a separate local cape library for each Minecraft account and can apply a selected cape through Wynntils. Its approved catalog is globally searchable, filterable, and sortable from a compact local index; the installer does not bundle or download the complete texture collection. Only visible previews and capes you explicitly save or recolor are fetched.
+
+**Skin-match cape** derives a compact palette from the current account skin or an uploaded skin PNG, then recolors a selected saved or catalog cape while preserving its brightness pattern, dimensions, and transparency. The result is always saved as a new cape. Animated catalog capes remain preview-only so the app cannot silently flatten their animation.
+
 ## Settings and privacy
 
 ![Settings](docs/screenshots/settings.png)

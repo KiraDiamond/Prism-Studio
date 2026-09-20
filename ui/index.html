@@ -260,6 +260,7 @@
                         <select id="cape-account-select" aria-label="Minecraft account for capes"></select>
                         <button id="btn-connect-wynntils" class="btn btn-secondary" type="button">Wynntils login</button>
                         <button id="btn-browse-wynntils" class="btn btn-secondary" type="button" aria-pressed="false">Browse catalog</button>
+                        <button id="btn-cape-skinner" class="btn btn-secondary" type="button">Skin-match cape</button>
                         <button id="btn-add-cape" class="btn btn-primary" type="button">+ Add cape</button>
                         <input id="cape-file-input" type="file" accept="image/png,.png" multiple hidden>
                     </div>
@@ -311,6 +312,7 @@
                         <label>Guild <select id="cape-catalog-guild"><option value="">All guild links</option><option value="linked">Guild-linked only</option></select></label>
                         <label>Back image <select id="cape-catalog-visibility"><option value="visible">Hide transparent</option><option value="all">Show all</option><option value="transparent">Transparent only</option></select></label>
                         <label>Variations <select id="cape-catalog-repeats"><option value="grouped">Group by design</option><option value="all">Show every cape</option><option value="only">Designs with recolors</option></select></label>
+                        <label>Sort <select id="cape-catalog-sort"><option value="color">Color and shade</option><option value="id">Cape ID</option><option value="resolution">Resolution</option><option value="coverage">Back coverage</option></select></label>
                         <button id="cape-catalog-clear" class="btn btn-secondary" type="button">Clear filters</button>
                     </div>
                     <div class="cape-catalog-content">
@@ -497,6 +499,32 @@
     </dialog>
 
     <dialog id="skin-destination-dialog" class="studio-dialog"><form method="dialog" id="skin-destination-form"><h3>Add skin to pack</h3><label for="skin-destination">Destination pack</label><select id="skin-destination"></select><div class="dialog-actions"><button class="btn btn-secondary" value="cancel">Cancel</button><button class="btn btn-primary" value="default">Save</button></div></form></dialog>
+    <dialog id="cape-skinner-dialog" class="studio-dialog cape-skinner-dialog" aria-labelledby="cape-skinner-title">
+        <div>
+            <div class="dialog-eyebrow">CAPE SKINNER</div>
+            <h3 id="cape-skinner-title">Match a cape to your skin</h3>
+            <p id="cape-skinner-source" class="cape-skinner-note">Choose a saved or catalog cape first.</p>
+            <fieldset class="cape-skinner-sources">
+                <legend>Palette source</legend>
+                <label><input id="cape-skinner-current" name="cape-skinner-palette" type="radio" value="current" checked> Current account skin</label>
+                <label><input id="cape-skinner-upload" name="cape-skinner-palette" type="radio" value="upload"> Upload a skin</label>
+                <button id="cape-skinner-choose-file" class="btn btn-secondary" type="button">Choose skin PNG</button>
+                <input id="cape-skinner-file" type="file" accept="image/png,.png" hidden>
+            </fieldset>
+            <label class="cape-skinner-name">New cape name <input id="cape-skinner-name" type="text" maxlength="60" autocomplete="off"></label>
+            <div id="cape-skinner-palette" class="cape-skinner-palette" aria-label="Extracted skin colors"></div>
+            <div class="cape-skinner-previews">
+                <figure><canvas id="cape-skinner-before"></canvas><figcaption>Original</figcaption></figure>
+                <figure><canvas id="cape-skinner-after"></canvas><figcaption>Skin matched</figcaption></figure>
+            </div>
+            <p id="cape-skinner-status" class="cape-skinner-note" role="status" aria-live="polite">Generate a preview, then save it as a new cape.</p>
+            <div class="dialog-actions">
+                <button id="cape-skinner-close" class="btn btn-secondary" type="button">Close</button>
+                <button id="cape-skinner-generate" class="btn btn-secondary" type="button">Generate preview</button>
+                <button id="cape-skinner-save" class="btn btn-primary" type="button" disabled>Save new cape</button>
+            </div>
+        </div>
+    </dialog>
     <script src="app.js"></script>
     <script src="skin-library.js"></script>
     <script src="skin-packs.js"></script>
