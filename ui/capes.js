@@ -226,7 +226,7 @@ async function readSkinUpload(file) {
 async function generateSkinnedCape() {
     const button=document.getElementById('cape-skinner-generate');
     const status=document.getElementById('cape-skinner-status');
-    button.disabled=true; status.textContent='Building palette and recolouring cape…';
+    button.disabled=true; status.textContent='Reading dominant torso and arm colors…';
     try {
         const skinSource=document.getElementById('cape-skinner-current').checked?currentAccountSkin():capeSkinnerUploadedSkin;
         if (!skinSource) throw new Error('Choose a skin first.');
@@ -234,7 +234,7 @@ async function generateSkinnedCape() {
             ? await invoke('fetch_catalog_cape',{sha:capeSkinnerSource.cape.sha1})
             : capeSkinnerSource.cape.texture;
         const [skin,cape,engine]=await Promise.all([loadPixelImage(skinSource),loadPixelImage(capeSource),import('./cape-skinner-engine.js')]);
-        const palette=engine.extractSkinPalette(skin.pixels,6);
+        const palette=engine.extractOutfitPalette(skin.pixels,skin.width,skin.height,6);
         const recoloured=engine.recolorCapePixels(cape.pixels,palette);
         drawCapePixels(document.getElementById('cape-skinner-before'),cape.width,cape.height,cape.pixels);
         const after=document.getElementById('cape-skinner-after');
@@ -246,7 +246,7 @@ async function generateSkinnedCape() {
             chip.style.backgroundColor=`rgb(${rgb.join(',')})`; chip.title=`RGB ${rgb.join(', ')}`; paletteHost.append(chip);
         }
         document.getElementById('cape-skinner-save').disabled=false;
-        status.textContent='Preview ready. Shading and transparency are preserved.';
+        status.textContent='Outfit-matched preview ready. Head colors were ignored; shading and transparency are preserved.';
     } catch(error) {
         capeSkinnerResult=''; document.getElementById('cape-skinner-save').disabled=true;
         status.textContent=String(error);

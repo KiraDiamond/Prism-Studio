@@ -1,14 +1,13 @@
 const luma=rgb=>.2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];
 
-export function extractSkinPalette(pixels,limit=6) {
-    if (!pixels || pixels.length%4 || limit<1) throw new Error('Invalid skin pixels.');
-    const buckets=new Map();
-    for (let i=0;i<pixels.length;i+=4) {
-        if (pixels[i+3]<128) continue;
-        const rgb=[pixels[i],pixels[i+1],pixels[i+2]].map(value=>Math.min(255,Math.round(value/16)*16));
-        const key=rgb.join(',');
-        const entry=buckets.get(key)||{rgb,count:0};entry.count++;buckets.set(key,entry);
-    }
+function addPixel(buckets,pixels,index,weight=1) {
+    if (pixels[index+3]<128) return;
+    const rgb=[pixels[index],pixels[index+1],pixels[index+2]].map(value=>Math.min(255,Math.round(value/16)*16));
+    const key=rgb.join(','),entry=buckets.get(key)||{rgb,count:0};
+    entry.count+=weight;buckets.set(key,entry);
+}
+
+function selectPalette(buckets,limit) {
     const candidates=[...buckets.values()].sort((a,b)=>b.count-a.count||a.rgb.join(',').localeCompare(b.rgb.join(',')));
     if (!candidates.length) throw new Error('Skin has no opaque pixels.');
     const selected=[candidates.shift()];
@@ -23,6 +22,26 @@ export function extractSkinPalette(pixels,limit=6) {
         selected.push(candidates.splice(best,1)[0]);
     }
     return selected.map(entry=>entry.rgb).sort((a,b)=>luma(a)-luma(b));
+}
+
+export function extractSkinPalette(pixels,limit=6) {
+    if (!pixels || pixels.length%4 || limit<1) throw new Error('Invalid skin pixels.');
+    const buckets=new Map();
+    for (let index=0;index<pixels.length;index+=4) addPixel(buckets,pixels,index);
+    return selectPalette(buckets,limit);
+}
+
+export function extractOutfitPalette(pixels,width,height,limit=6) {
+    if (!pixels || width!==64 || ![32,64].includes(height) || pixels.length!==width*height*4 || limit<1)
+        throw new Error('Skin must be 64x32 or 64x64 pixels.');
+    const buckets=new Map();
+    // Minecraft UV rectangles: torso first, then arms. Weighting favors the chest while retaining sleeves.
+    const regions=[[16,16,24,16,4],[40,16,16,16,2]];
+    if (height===64) regions.push([32,48,16,16,2],[16,32,24,16,3],[40,32,16,16,2],[48,48,16,16,2]);
+    for (const [x,y,regionWidth,regionHeight,weight] of regions)
+        for (let row=y;row<y+regionHeight;row++) for (let column=x;column<x+regionWidth;column++)
+            addPixel(buckets,pixels,(row*width+column)*4,weight);
+    return selectPalette(buckets,limit);
 }
 
 export function recolorCapePixels(pixels,palette) {
