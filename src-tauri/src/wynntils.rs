@@ -128,7 +128,7 @@ fn open_window(app: tauri::AppHandle, account: String, key: String, refresh: boo
     let account_for_title = account.clone();
     let key_for_title = key.clone();
     WebviewWindowBuilder::new(&app, label, WebviewUrl::External(url))
-        .title(format!("Wynntils · {account} · Prism Studio Test"))
+        .title(format!("Wynntils · {account} · Prism Studio"))
         .inner_size(960.0, 760.0)
         .visible(false)
         .data_directory(directory)

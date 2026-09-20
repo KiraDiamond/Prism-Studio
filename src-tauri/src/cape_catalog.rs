@@ -54,7 +54,7 @@ fn download(sha: &str) -> Result<Vec<u8>, String> {
         .redirect(Policy::none())
         .connect_timeout(Duration::from_secs(8))
         .timeout(Duration::from_secs(20))
-        .user_agent("Prism Studio Test/0.1.1")
+        .user_agent("Prism Studio/0.2.0")
         .build()
         .map_err(|_| "Could not prepare the cape download.")?;
     let mut response = client.get(format!("{CAPE_URL}{sha}"))

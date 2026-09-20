@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Prism Studio Test",
-  "version": "0.1.1",
-  "identifier": "uk.diamond.prismstudiotest",
+  "productName": "Prism Studio",
+  "version": "0.2.0",
+  "identifier": "uk.diamond.prismstudio",
   "build": {
     "frontendDist": "../dist-ui"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Prism Studio Test",
+        "title": "Prism Studio",
         "width": 1280,
         "height": 840,
         "minWidth": 640,

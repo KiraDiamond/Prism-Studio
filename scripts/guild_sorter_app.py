@@ -60,7 +60,7 @@ class GuildSorter:
         self.refresh_progress()
 
     def make_ui(self):
-        self.root.title("Wynntils Guild Cape Sorter — Prism Studio Test")
+        self.root.title("Wynntils Guild Cape Sorter — Prism Studio")
         self.root.geometry("1280x810")
         self.root.minsize(1050, 650)
         self.root.configure(bg="#111418")
@@ -349,7 +349,7 @@ class GuildSorter:
         entry["guilds"].append({"tag": prefix, "name": name, "confidence": "High", "status": "text-reviewed"})
         write_json(GUILDS, self.guilds)
         self.current_guild.configure(text=f"Reviewed lettering: {prefix} · {name}. Cape ownership remains unverified.")
-        self.status.set(f"Saved {self.selected['id']} to guild-capes.json. Rebuild Prism Studio Test to include it.")
+        self.status.set(f"Saved {self.selected['id']} to guild-capes.json. Rebuild Prism Studio to include it.")
         self.refresh_list()
 
     def save_recolor(self):
